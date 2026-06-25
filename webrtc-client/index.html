@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>WebRTC - Laboratorio Asterisk</title>
+<style>
+  body { font-family: sans-serif; max-width: 480px; margin: 40px auto; }
+  input, button { font-size: 16px; padding: 8px; margin: 4px 0; width: 100%; }
+  #status { padding: 10px; border-radius: 6px; background: #eee; margin-bottom: 12px; }
+  .ok { background: #c8f7c5 !important; }
+  .err { background: #f7c5c5 !important; }
+</style>
+</head>
+<body>
+  <h2>Softphone WebRTC - Laboratorio</h2>
+
+  <div id="status">Sin conectar</div>
+
+  <label>Extensión:</label>
+  <input id="ext" value="1001">
+  <label>Contraseña:</label>
+  <input id="pass" type="password" value="changeme_1001">
+  <button id="btnRegister">Registrarme</button>
+
+  <hr>
+
+  <label>Llamar a extensión:</label>
+  <input id="target" value="1002">
+  <button id="btnCall">Llamar</button>
+  <button id="btnHangup">Colgar</button>
+
+  <audio id="remoteAudio" autoplay></audio>
+
+  <script src="https://cdn.jsdelivr.net/npm/jssip@3/dist/jssip.min.js"></script>
+  <script>
+    const PUBLIC_IP = window.location.hostname; // toma la IP de la URL que usaste para abrir esta página
+    let ua = null;
+    let session = null;
+
+    function setStatus(text, cls) {
+      const el = document.getElementById("status");
+      el.textContent = text;
+      el.className = cls || "";
+    }
+
+    document.getElementById("btnRegister").onclick = () => {
+      const ext = document.getElementById("ext").value;
+      const pass = document.getElementById("pass").value;
+
+      const socket = new JsSIP.WebSocketInterface(`wss://${PUBLIC_IP}:8089/ws`);
+      ua = new JsSIP.UA({
+        sockets: [socket],
+        uri: `sip:${ext}@${PUBLIC_IP}`,
+        password: pass,
+        display_name: ext,
+        session_timers: false
+      });
+
+      ua.on("registered", () => setStatus(`Registrado como ${ext}`, "ok"));
+      ua.on("unregistered", () => setStatus("Sin registrar"));
+      ua.on("registrationFailed", (e) => setStatus("Error al registrar: " + e.cause, "err"));
+
+      ua.on("newRTCSession", (data) => {
+        session = data.session;
+        if (session.direction === "incoming") {
+          setStatus("Llamada entrante de " + data.request.from.uri.user, "ok");
+          session.answer({ mediaConstraints: { audio: true, video: false } });
+        }
+        session.on("accepted", () => setStatus("En llamada", "ok"));
+        session.on("ended", () => setStatus("Llamada finalizada"));
+        session.on("failed", (e) => setStatus("Llamada falló: " + e.cause, "err"));
+
+        session.connection.addEventListener("addstream", (e) => {
+          document.getElementById("remoteAudio").srcObject = e.stream;
+        });
+      });
+
+      ua.start();
+    };
+
+    document.getElementById("btnCall").onclick = () => {
+      const target = document.getElementById("target").value;
+      if (!ua) return setStatus("Primero regístrate", "err");
+      ua.call(`sip:${target}@${PUBLIC_IP}`, {
+        mediaConstraints: { audio: true, video: false }
+      });
+    };
+
+    document.getElementById("btnHangup").onclick = () => {
+      if (session) session.terminate();
+    };
+  </script>
+</body>
+</html>

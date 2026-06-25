@@ -90,3 +90,13 @@ username=1003
 password=changeme_1003
 
 [1003](aor-base)
+
+[1004](webrtc-endpoint-base)
+auth=auth1004
+aors=1004
+
+[auth1004](auth-base)
+username=1004
+password=changeme_1004
+
+[1004](aor-base)

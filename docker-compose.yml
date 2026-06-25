@@ -1,0 +1,93 @@
+version: "3.9"
+
+services:
+  db:
+    image: mariadb:10.6
+    container_name: lab-db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - lab-net
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  midpoint:
+    image: evolveum/midpoint:latest
+    container_name: lab-midpoint
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      MP_SET_midpoint_repository_jdbcUrl: jdbc:mariadb://db:3306/${DB_NAME}
+      MP_SET_midpoint_repository_jdbcUsername: ${DB_USER}
+      MP_SET_midpoint_repository_jdbcPassword: ${DB_PASSWORD}
+      MP_SET_midpoint_repository_database: mariadb
+    ports:
+      - "8080:8080"
+    volumes:
+      - midpoint_home:/opt/midpoint/var
+    networks:
+      - lab-net
+
+  asterisk:
+    image: andrius/asterisk:20
+    container_name: lab-asterisk
+    restart: unless-stopped
+    network_mode: host
+    entrypoint: ["/usr/local/bin/render-and-start.sh"]
+    command: ["asterisk", "-vvvdddf", "-T", "-W", "-U", "asterisk", "-p"]
+    environment:
+      PUBLIC_IP: ${PUBLIC_IP}
+      LOCAL_NET: ${LOCAL_NET}
+      RTP_START: ${RTP_START}
+      RTP_END: ${RTP_END}
+      AMI_PASSWORD: ${AMI_PASSWORD}
+      PUID: 1000
+      PGID: 1000
+    volumes:
+      - ./asterisk/config:/etc/asterisk
+      - ./asterisk/render-and-start.sh:/usr/local/bin/render-and-start.sh:ro
+      - asterisk_data:/var/lib/asterisk
+
+  call-monitor-backend:
+    build:
+      context: ./call-monitor-backend
+    container_name: lab-call-monitor
+    restart: unless-stopped
+    depends_on:
+      - db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      ASTERISK_HOST: host.docker.internal
+      AMI_USER: call-monitor
+      AMI_PASSWORD: ${AMI_PASSWORD}
+      DB_HOST: db
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    networks:
+      - lab-net
+
+networks:
+  lab-net:
+    driver: bridge
+
+volumes:
+  db_data:
+  midpoint_home:
+  asterisk_data:

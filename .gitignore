@@ -1,0 +1,8 @@
+.env
+asterisk/config/pjsip.conf
+asterisk/config/http.conf
+asterisk/config/manager.conf
+asterisk/config/rtp.conf
+asterisk/config/keys/
+node_modules/
+*.log

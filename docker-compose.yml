@@ -21,18 +21,36 @@ services:
       timeout: 5s
       retries: 5
 
+  postgres:
+    image: postgres:15
+    container_name: lab-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: midpoint
+      POSTGRES_USER: midpoint
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - lab-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U midpoint"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   midpoint:
     image: evolveum/midpoint:latest
     container_name: lab-midpoint
     restart: unless-stopped
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
     environment:
-      MP_SET_midpoint_repository_jdbcUrl: jdbc:mariadb://db:3306/${DB_NAME}
-      MP_SET_midpoint_repository_jdbcUsername: ${DB_USER}
-      MP_SET_midpoint_repository_jdbcPassword: ${DB_PASSWORD}
-      MP_SET_midpoint_repository_database: mariadb
+      MP_SET_midpoint_repository_jdbcUrl: jdbc:postgresql://postgres:5432/midpoint
+      MP_SET_midpoint_repository_jdbcUsername: midpoint
+      MP_SET_midpoint_repository_jdbcPassword: ${PG_PASSWORD}
+      MP_SET_midpoint_repository_database: postgresql
     ports:
       - "8080:8080"
     volumes:
@@ -78,8 +96,15 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
       PORT: 4000
+      ASTERISK_CONFIG_DIR: /asterisk-config
+      MIDPOINT_BASE_URL: ${MIDPOINT_BASE_URL}
+      MIDPOINT_USER: ${MIDPOINT_USER}
+      MIDPOINT_PASSWORD: ${MIDPOINT_PASSWORD}
+      AGENTE_ROLE_OID: ${AGENTE_ROLE_OID}
     ports:
       - "4000:4000"
+    volumes:
+      - ./asterisk/config:/asterisk-config
     networks:
       - lab-net
 
@@ -88,6 +113,7 @@ networks:
     driver: bridge
 
 volumes:
+  postgres_data:
   db_data:
   midpoint_home:
   asterisk_data:

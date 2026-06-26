@@ -3,8 +3,11 @@ const express = require("express");
 const cors = require("cors");
 const http = require("http");
 const { Server } = require("socket.io");
-const AmiClient = require("asterisk-manager");
+const { startMidpointPoller } = require("./midpointPoller");
 const db = require("./db");
+const { appendExtension } = require("./provisionPjsip");
+
+const ALLOWED_ROLES = ["AgenteCallCenter"];
 
 const app = express();
 app.use(cors());
@@ -13,9 +16,7 @@ app.use(express.json());
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
 
-const ami = new AmiClient(5038, process.env.ASTERISK_HOST || "asterisk",
-  process.env.AMI_USER || "call-monitor", process.env.AMI_PASSWORD, true);
-ami.keepConnected();
+const ami = require("./amiClient");
 
 function extToFromChannel(channel) {
   if (!channel) return null;
@@ -53,6 +54,26 @@ ami.on("managerevent", async (evt) => {
   }
 });
 
+app.post("/api/provision", async (req, res) => {
+  const { username, extension, password, role } = req.body;
+  if (!username || !extension || !password || !role) {
+    return res.status(400).json({ error: "username, extension, password y role son requeridos" });
+  }
+  if (!ALLOWED_ROLES.includes(role)) {
+    return res.status(403).json({ error: `Rol '${role}' no autorizado para provisionar extension SIP` });
+  }
+  try {
+    appendExtension(extension, password);
+    await db.addUserExtension(username, extension, role);
+    ami.action({ Action: "Command", Command: "module reload res_pjsip.so" }, (err) => {
+      if (err) console.error("[AMI] Error al recargar pjsip:", err.message);
+    });
+    res.json({ status: "provisioned", username, extension });
+  } catch (err) {
+    res.status(409).json({ error: err.message });
+  }
+});
+
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 app.get("/api/calls/active", async (req, res) => res.json(await db.getActiveSessions()));
 app.get("/api/calls/history", async (req, res) => res.json(await db.getHistory(Number(req.query.limit) || 50)));
@@ -61,3 +82,5 @@ io.on("connection", (socket) => console.log("[socket.io] cliente conectado:", so
 
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => console.log(`[call-monitor-backend] escuchando en :${PORT}`));
+
+startMidpointPoller();

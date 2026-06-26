@@ -48,3 +48,41 @@ async function getHistory(limit = 50) {
 }
 
 module.exports = { startCallSession, markBridged, endCallSession, getActiveSessions, getHistory };
+
+async function addUserExtension(username, extension, role) {
+  await pool.execute(
+    `INSERT INTO user_extensions (username, extension, role) VALUES (?, ?, ?)
+     ON DUPLICATE KEY UPDATE username=VALUES(username), role=VALUES(role)`,
+    [username, extension, role]
+  );
+}
+
+module.exports.addUserExtension = addUserExtension;
+
+const bcrypt = require("bcryptjs");
+
+async function userExtensionExists(username) {
+  const [rows] = await pool.execute(`SELECT 1 FROM user_extensions WHERE username=?`, [username]);
+  return rows.length > 0;
+}
+
+async function getNextAvailableExtension() {
+  const [rows] = await pool.execute(
+    `SELECT MAX(CAST(extension AS UNSIGNED)) as maxExt FROM user_extensions WHERE CAST(extension AS UNSIGNED) >= 2000`
+  );
+  const max = rows[0].maxExt;
+  return max ? max + 1 : 2000;
+}
+
+async function addUserExtensionWithPassword(username, extension, role, plainPassword) {
+  const hash = await bcrypt.hash(plainPassword, 10);
+  await pool.execute(
+    `INSERT INTO user_extensions (username, extension, role, password_hash) VALUES (?, ?, ?, ?)
+     ON DUPLICATE KEY UPDATE role=VALUES(role), password_hash=VALUES(password_hash)`,
+    [username, extension, role, hash]
+  );
+}
+
+module.exports.userExtensionExists = userExtensionExists;
+module.exports.getNextAvailableExtension = getNextAvailableExtension;
+module.exports.addUserExtensionWithPassword = addUserExtensionWithPassword;

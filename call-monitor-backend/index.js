@@ -70,7 +70,7 @@ ami.on("managerevent", async (evt) => {
         break;
       }
       case "ContactStatus": {
-        const reachable = evt.contactstatus === "Reachable" || evt.contactstatus === "Created";
+        const reachable = ["Reachable", "Created", "NonQualified"].includes(evt.contactstatus);
         if (evt.aor) onlineStatus.setStatus(evt.aor, reachable);
         break;
       }

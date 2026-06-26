@@ -152,3 +152,13 @@ async function getTeamAgents(supervisorUsername) {
 }
 
 module.exports.getTeamAgents = getTeamAgents;
+
+async function isAgentOfSupervisor(supervisorUsername, agentUsername) {
+  const [rows] = await pool.execute(
+    `SELECT 1 FROM supervisor_agents WHERE supervisor_username = ? AND agent_username = ?`,
+    [supervisorUsername, agentUsername]
+  );
+  return rows.length > 0;
+}
+
+module.exports.isAgentOfSupervisor = isAgentOfSupervisor;

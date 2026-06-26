@@ -79,6 +79,7 @@ async function loadTeam(token) {
       const statusHtml = agent.inCall
         ? '<span class="incall-pill">En llamada</span>'
         : `<span class="online-dot ${agent.online ? "yes" : ""}"></span>${agent.online ? "En línea" : "Desconectado"}`;
+      tr.className = "row-clickable";
       tr.innerHTML = `
         <td class="mono">${agent.username}</td>
         <td class="mono">${agent.extension}</td>
@@ -86,6 +87,7 @@ async function loadTeam(token) {
         <td class="mono">${agent.totalCalls}</td>
         <td class="mono">${formatDuration(Math.round(agent.avgDurationSeconds))}</td>
       `;
+      tr.addEventListener("click", () => openAgentModal(agent.username));
       tbody.appendChild(tr);
     });
   } catch (err) {
@@ -225,3 +227,45 @@ document.getElementById("btnLogout").onclick = (e) => {
   if (ua) ua.stop();
   location.reload();
 };
+
+
+async function openAgentModal(username) {
+  const token = localStorage.getItem("cc_token");
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/supervisor/agent/${username}/calls`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) return alert(data.error || "Error al cargar el agente");
+
+    document.getElementById("modalAgentTitle").textContent = `${data.username} · ext. ${data.extension}`;
+    document.getElementById("modalTotal").textContent = data.stats.total_calls || 0;
+    document.getElementById("modalAnswered").textContent = data.stats.answered_calls || 0;
+    document.getElementById("modalTmo").textContent = formatDuration(Math.round(data.stats.avg_duration_seconds) || 0);
+
+    const tbody = document.getElementById("modalCallsBody");
+    tbody.innerHTML = "";
+    data.calls.forEach((call) => {
+      const tr = document.createElement("tr");
+      const duration = call.duration_seconds > 0 ? formatDuration(call.duration_seconds) : "No contestada";
+      tr.innerHTML = `
+        <td class="mono">${formatTime(call.ended_at)}</td>
+        <td class="mono">${call.other_party}</td>
+        <td><span class="dir-badge dir-${call.direction}">${call.direction}</span></td>
+        <td class="mono">${duration}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("agentModal").classList.remove("hidden");
+  } catch (err) {
+    console.error("Error abriendo modal:", err);
+  }
+}
+
+document.getElementById("modalClose").onclick = () => {
+  document.getElementById("agentModal").classList.add("hidden");
+};
+document.getElementById("agentModal").addEventListener("click", (e) => {
+  if (e.target.id === "agentModal") e.target.classList.add("hidden");
+});

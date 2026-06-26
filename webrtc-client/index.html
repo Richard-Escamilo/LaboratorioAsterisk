@@ -154,6 +154,26 @@
   <audio id="remoteAudio" autoplay></audio>
 </div>
 
+<div id="agentModal" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3 id="modalAgentTitle">Agente</h3>
+      <button id="modalClose">X</button>
+    </div>
+    <div class="modal-body">
+      <div class="stats-row">
+        <div class="stat-box"><div class="label">Llamadas</div><div class="value" id="modalTotal">0</div></div>
+        <div class="stat-box"><div class="label">Contestadas</div><div class="value" id="modalAnswered">0</div></div>
+        <div class="stat-box"><div class="label">TMO</div><div class="value" id="modalTmo">00:00</div></div>
+      </div>
+      <table class="calls-table">
+        <thead><tr><th>Hora</th><th>Con</th><th>Dirección</th><th>Duración</th></tr></thead>
+        <tbody id="modalCallsBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/jssip@3/dist/jssip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 <script src="app.js"></script>

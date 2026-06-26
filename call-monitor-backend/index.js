@@ -178,6 +178,25 @@ app.get("/api/supervisor/team", authMiddleware, async (req, res) => {
   });
 });
 
+app.get("/api/supervisor/agent/:username/calls", authMiddleware, async (req, res) => {
+  if (req.user.role !== "Supervisor" && req.user.role !== "Admin") {
+    return res.status(403).json({ error: "No autorizado" });
+  }
+  const { username } = req.params;
+
+  if (req.user.role === "Supervisor") {
+    const belongs = await db.isAgentOfSupervisor(req.user.username, username);
+    if (!belongs) return res.status(403).json({ error: "Ese agente no es parte de tu equipo" });
+  }
+
+  const agent = await db.getUserByUsername(username);
+  if (!agent) return res.status(404).json({ error: "Agente no encontrado" });
+
+  const calls = await db.getCallsByExtension(agent.extension, 15);
+  const stats = await db.getDailyStats(agent.extension);
+  res.json({ username, extension: agent.extension, calls, stats });
+});
+
 app.get("/health", (req, res) => res.json({ status: "ok" }));
 app.get("/api/calls/active", async (req, res) => res.json(await db.getActiveSessions()));
 app.get("/api/calls/history", async (req, res) => res.json(await db.getHistory(Number(req.query.limit) || 50)));

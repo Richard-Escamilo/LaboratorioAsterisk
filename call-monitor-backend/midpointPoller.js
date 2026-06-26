@@ -5,8 +5,14 @@ const ami = require("./amiClient");
 const MIDPOINT_BASE_URL = process.env.MIDPOINT_BASE_URL;
 const MIDPOINT_USER = process.env.MIDPOINT_USER;
 const MIDPOINT_PASSWORD = process.env.MIDPOINT_PASSWORD;
-const AGENTE_ROLE_OID = process.env.AGENTE_ROLE_OID;
 const POLL_INTERVAL_MS = 20000;
+
+// Roles que reconocemos. needsExtension=true => se le crea extension SIP.
+const ROLE_MAP = [
+  { oid: process.env.AGENTE_ROLE_OID, role: "AgenteCallCenter", needsExtension: true },
+  { oid: process.env.SUPERVISOR_ROLE_OID, role: "Supervisor", needsExtension: true },
+  { oid: process.env.ADMIN_ROLE_OID, role: "Admin", needsExtension: false },
+];
 
 function basicAuthHeader() {
   const token = Buffer.from(`${MIDPOINT_USER}:${MIDPOINT_PASSWORD}`).toString("base64");
@@ -37,32 +43,42 @@ function extractUsername(user) {
   return typeof user.name === "string" ? user.name : user.name["#text"];
 }
 
+async function provisionUser(username, roleConfig) {
+  const exists = await db.userExtensionExists(username);
+  if (exists) return;
+
+  const password = generatePassword();
+
+  if (roleConfig.needsExtension) {
+    const extension = await db.getNextAvailableExtension();
+    if (extensionExists(String(extension))) return;
+    appendExtension(String(extension), password);
+    await db.addUserExtensionWithPassword(username, String(extension), roleConfig.role, password);
+    ami.action({ Action: "Command", Command: "module reload res_pjsip.so" }, () => {});
+    console.log(`[midpoint-poller] APROVISIONADO (SIP) usuario=${username} rol=${roleConfig.role} extension=${extension} password=${password}`);
+  } else {
+    await db.addUserExtensionWithPassword(username, null, roleConfig.role, password);
+    console.log(`[midpoint-poller] APROVISIONADO (login) usuario=${username} rol=${roleConfig.role} password=${password}`);
+  }
+}
+
 async function pollOnce() {
-  if (!AGENTE_ROLE_OID || !MIDPOINT_PASSWORD) {
-    console.warn("[midpoint-poller] Faltan variables de entorno, omito ciclo");
+  if (!MIDPOINT_PASSWORD) {
+    console.warn("[midpoint-poller] Falta MIDPOINT_PASSWORD, omito ciclo");
     return;
   }
   try {
     const users = await fetchUsersFromMidpoint();
     for (const user of users) {
-      if (!userHasRole(user, AGENTE_ROLE_OID)) continue;
       const username = extractUsername(user);
       if (!username) continue;
 
-      const exists = await db.userExtensionExists(username);
-      if (exists) continue;
-
-      const extension = await db.getNextAvailableExtension();
-      const password = generatePassword();
-
-      if (extensionExists(String(extension))) continue;
-
-      appendExtension(String(extension), password);
-      await db.addUserExtensionWithPassword(username, String(extension), "AgenteCallCenter", password);
-
-      ami.action({ Action: "Command", Command: "module reload res_pjsip.so" }, () => {});
-
-      console.log(`[midpoint-poller] APROVISIONADO usuario=${username} extension=${extension} password=${password}`);
+      for (const roleConfig of ROLE_MAP) {
+        if (!roleConfig.oid) continue;
+        if (userHasRole(user, roleConfig.oid)) {
+          await provisionUser(username, roleConfig);
+        }
+      }
     }
   } catch (err) {
     console.error("[midpoint-poller] Error:", err.message);

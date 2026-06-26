@@ -86,3 +86,56 @@ async function addUserExtensionWithPassword(username, extension, role, plainPass
 module.exports.userExtensionExists = userExtensionExists;
 module.exports.getNextAvailableExtension = getNextAvailableExtension;
 module.exports.addUserExtensionWithPassword = addUserExtensionWithPassword;
+
+async function getUserByUsername(username) {
+  const [rows] = await pool.execute(`SELECT * FROM user_extensions WHERE username=?`, [username]);
+  return rows[0] || null;
+}
+
+module.exports.getUserByUsername = getUserByUsername;
+
+async function getCallsByExtension(extension, limit = 10) {
+  const [rows] = await pool.execute(
+    `SELECT *,
+       CASE WHEN bridged_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, bridged_at, ended_at) ELSE 0 END AS duration_seconds,
+       CASE WHEN caller_ext = ? THEN callee_ext ELSE caller_ext END AS other_party,
+       CASE WHEN caller_ext = ? THEN 'saliente' ELSE 'entrante' END AS direction
+     FROM call_history
+     WHERE caller_ext = ? OR callee_ext = ?
+     ORDER BY ended_at DESC
+     LIMIT ?`,
+    [extension, extension, extension, extension, limit]
+  );
+  return rows;
+}
+
+async function getDailyStats(extension) {
+  const [rows] = await pool.execute(
+    `SELECT
+       COUNT(*) AS total_calls,
+       SUM(CASE WHEN bridged_at IS NOT NULL THEN 1 ELSE 0 END) AS answered_calls,
+       AVG(CASE WHEN bridged_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, bridged_at, ended_at) END) AS avg_duration_seconds
+     FROM call_history
+     WHERE (caller_ext = ? OR callee_ext = ?) AND DATE(started_at) = CURDATE()`,
+    [extension, extension]
+  );
+  return rows[0];
+}
+
+module.exports.getCallsByExtension = getCallsByExtension;
+module.exports.getDailyStats = getDailyStats;
+
+async function getHourlyStats(extension) {
+  const [rows] = await pool.execute(
+    `SELECT HOUR(started_at) AS hour, COUNT(*) AS count
+     FROM call_history
+     WHERE (caller_ext = ? OR callee_ext = ?) AND DATE(started_at) = CURDATE()
+     GROUP BY HOUR(started_at)`,
+    [extension, extension]
+  );
+  const hourly = Array(24).fill(0);
+  rows.forEach((r) => { hourly[r.hour] = r.count; });
+  return hourly;
+}
+
+module.exports.getHourlyStats = getHourlyStats;

@@ -29,7 +29,7 @@ async function endCallSession(channelId, cause) {
   if (rows.length === 0) return null;
   const session = rows[0];
   await pool.execute(
-    `INSERT INTO call_history (channel_id, caller_ext, callee_ext, started_at, bridged_at, ended_at, hangup_cause)
+    `INSERT IGNORE INTO call_history (channel_id, caller_ext, callee_ext, started_at, bridged_at, ended_at, hangup_cause)
      VALUES (?, ?, ?, ?, ?, NOW(), ?)`,
     [session.channel_id, session.caller_ext, session.callee_ext, session.started_at, session.bridged_at, cause]
   );

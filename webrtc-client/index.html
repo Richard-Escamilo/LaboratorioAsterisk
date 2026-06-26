@@ -71,6 +71,7 @@
       <div class="tabs" id="tabsRow">
         <button class="tab-btn active" data-tab="phone">Teléfono</button>
         <button class="tab-btn" data-tab="metrics">Mis métricas</button>
+        <button class="tab-btn hidden" id="teamTabBtn" data-tab="team">Mi equipo</button>
       </div>
 
       <div id="tabPhone" class="tab-panel">
@@ -90,6 +91,32 @@
         <div id="noPhoneBox" class="hidden">
           Tu rol no tiene una extensión de teléfono asignada — solo acceso a la consola.
         </div>
+      </div>
+
+      <div id="tabTeam" class="tab-panel hidden">
+        <p class="section-title">Resumen del equipo</p>
+        <div class="stats-row">
+          <div class="stat-box">
+            <div class="label">Llamadas equipo</div>
+            <div class="value" id="teamTotalCalls">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="label">Contestadas</div>
+            <div class="value" id="teamTotalAnswered">0</div>
+          </div>
+          <div class="stat-box">
+            <div class="label">TMO equipo</div>
+            <div class="value" id="teamTmo">00:00</div>
+          </div>
+        </div>
+
+        <p class="section-title">Mis agentes</p>
+        <table class="calls-table">
+          <thead>
+            <tr><th>Agente</th><th>Ext.</th><th>Estado</th><th>Llamadas</th><th>TMO</th></tr>
+          </thead>
+          <tbody id="teamTableBody"></tbody>
+        </table>
       </div>
 
       <div id="tabMetrics" class="tab-panel hidden">

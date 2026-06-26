@@ -7,6 +7,7 @@ const { Server } = require("socket.io");
 const { startMidpointPoller } = require("./midpointPoller");
 const db = require("./db");
 const { appendExtension } = require("./provisionPjsip");
+const onlineStatus = require("./onlineStatus");
 
 const ALLOWED_ROLES = ["AgenteCallCenter"];
 const bcrypt = require("bcryptjs");
@@ -68,6 +69,12 @@ ami.on("managerevent", async (evt) => {
         if (session) io.emit("call:ended", { callId: evt.linkedid, cause: evt["cause-txt"] });
         break;
       }
+      case "ContactStatus": {
+        const reachable = evt.contactstatus === "Reachable" || evt.contactstatus === "Created";
+        if (evt.aor) onlineStatus.setStatus(evt.aor, reachable);
+        break;
+      }
+
       default: break;
     }
   } catch (err) {
@@ -124,6 +131,51 @@ app.get("/api/me/calls", authMiddleware, async (req, res) => {
   const stats = await db.getDailyStats(req.user.extension);
   const hourly = await db.getHourlyStats(req.user.extension);
   res.json({ calls, stats, hourly });
+});
+
+app.get("/api/supervisor/team", authMiddleware, async (req, res) => {
+  if (req.user.role !== "Supervisor" && req.user.role !== "Admin") {
+    return res.status(403).json({ error: "Solo supervisores pueden ver esta informacion" });
+  }
+  const agents = await db.getTeamAgents(req.user.username);
+  const active = await db.getActiveSessions();
+
+  const team = [];
+  let totalCalls = 0;
+  let totalAnsweredWeighted = 0;
+  let totalAnswered = 0;
+
+  for (const agent of agents) {
+    const stats = await db.getDailyStats(agent.extension);
+    const inCall = active.some(
+      (s) => s.caller_ext === agent.extension || s.callee_ext === agent.extension
+    );
+    const answered = Number(stats.answered_calls) || 0;
+    const avgDur = Number(stats.avg_duration_seconds) || 0;
+
+    team.push({
+      username: agent.username,
+      extension: agent.extension,
+      online: onlineStatus.isOnline(agent.extension),
+      inCall,
+      totalCalls: Number(stats.total_calls) || 0,
+      answeredCalls: answered,
+      avgDurationSeconds: avgDur,
+    });
+
+    totalCalls += Number(stats.total_calls) || 0;
+    totalAnswered += answered;
+    totalAnsweredWeighted += avgDur * answered;
+  }
+
+  res.json({
+    team,
+    totals: {
+      totalCalls,
+      totalAnswered,
+      avgDurationSeconds: totalAnswered > 0 ? totalAnsweredWeighted / totalAnswered : 0,
+    },
+  });
 });
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));

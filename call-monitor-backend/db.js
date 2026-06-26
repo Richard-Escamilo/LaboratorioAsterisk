@@ -139,3 +139,16 @@ async function getHourlyStats(extension) {
 }
 
 module.exports.getHourlyStats = getHourlyStats;
+
+async function getTeamAgents(supervisorUsername) {
+  const [rows] = await pool.execute(
+    `SELECT ue.username, ue.extension
+     FROM supervisor_agents sa
+     JOIN user_extensions ue ON ue.username = sa.agent_username
+     WHERE sa.supervisor_username = ?`,
+    [supervisorUsername]
+  );
+  return rows;
+}
+
+module.exports.getTeamAgents = getTeamAgents;

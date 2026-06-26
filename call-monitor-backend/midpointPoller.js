@@ -62,7 +62,22 @@ async function provisionUser(username, roleConfig) {
   }
 }
 
+let isPolling = false;
+
 async function pollOnce() {
+  if (isPolling) {
+    console.log("[midpoint-poller] Ciclo anterior aun en curso, omito este tick");
+    return;
+  }
+  isPolling = true;
+  try {
+    await pollOnceInner();
+  } finally {
+    isPolling = false;
+  }
+}
+
+async function pollOnceInner() {
   if (!MIDPOINT_PASSWORD) {
     console.warn("[midpoint-poller] Falta MIDPOINT_PASSWORD, omito ciclo");
     return;

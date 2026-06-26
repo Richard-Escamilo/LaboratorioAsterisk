@@ -157,3 +157,8 @@ button:active { transform: scale(.98); }
 
 .chart-box { background: var(--bg); border: 1px solid var(--line); border-radius: 6px; padding: 14px; margin-bottom: 6px; }
 .chart-box canvas { max-height: 140px; }
+
+.online-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; background: var(--muted); }
+.online-dot.yes { background: var(--ok); }
+.incall-pill { font-size: 10px; padding: 2px 7px; border-radius: 3px; font-weight: 700; text-transform: uppercase; background: #FBF1E0; color: var(--amber); }
+.totals-row td { font-weight: 700; border-top: 2px solid var(--line); }

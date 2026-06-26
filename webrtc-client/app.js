@@ -49,14 +49,49 @@ function registerSip(extension, password) {
 }
 
 // ---------------- Pestañas ----------------
+const TAB_IDS = { phone: "tabPhone", metrics: "tabMetrics", team: "tabTeam" };
 document.querySelectorAll(".tab-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));
     document.querySelectorAll(".tab-panel").forEach((p) => p.classList.add("hidden"));
     btn.classList.add("active");
-    document.getElementById(btn.dataset.tab === "phone" ? "tabPhone" : "tabMetrics").classList.remove("hidden");
+    document.getElementById(TAB_IDS[btn.dataset.tab]).classList.remove("hidden");
+    if (btn.dataset.tab === "team") loadTeam(localStorage.getItem("cc_token"));
   });
 });
+
+async function loadTeam(token) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/supervisor/team`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) return;
+
+    document.getElementById("teamTotalCalls").textContent = data.totals.totalCalls;
+    document.getElementById("teamTotalAnswered").textContent = data.totals.totalAnswered;
+    document.getElementById("teamTmo").textContent = formatDuration(Math.round(data.totals.avgDurationSeconds));
+
+    const tbody = document.getElementById("teamTableBody");
+    tbody.innerHTML = "";
+    data.team.forEach((agent) => {
+      const tr = document.createElement("tr");
+      const statusHtml = agent.inCall
+        ? '<span class="incall-pill">En llamada</span>'
+        : `<span class="online-dot ${agent.online ? "yes" : ""}"></span>${agent.online ? "En línea" : "Desconectado"}`;
+      tr.innerHTML = `
+        <td class="mono">${agent.username}</td>
+        <td class="mono">${agent.extension}</td>
+        <td>${statusHtml}</td>
+        <td class="mono">${agent.totalCalls}</td>
+        <td class="mono">${formatDuration(Math.round(agent.avgDurationSeconds))}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Error cargando equipo:", err);
+  }
+}
 
 // ---------------- Métricas / gráfico ----------------
 function formatDuration(seconds) {
@@ -161,6 +196,9 @@ document.getElementById("btnLogin").onclick = async () => {
       document.getElementById("tabsRow").classList.remove("hidden");
       registerSip(data.extension, password);
       loadMyCalls(data.token);
+      if (data.role === "Supervisor" || data.role === "Admin") {
+        document.getElementById("teamTabBtn").classList.remove("hidden");
+      }
     } else {
       document.getElementById("softphoneBox").classList.add("hidden");
       document.getElementById("noPhoneBox").classList.remove("hidden");

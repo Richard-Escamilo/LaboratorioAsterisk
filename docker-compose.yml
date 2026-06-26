@@ -1,5 +1,4 @@
 version: "3.9"
-
 services:
   db:
     image: mariadb:10.6
@@ -20,7 +19,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
   postgres:
     image: postgres:15
     container_name: lab-postgres
@@ -38,7 +36,6 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-
   midpoint:
     image: evolveum/midpoint:latest
     container_name: lab-midpoint
@@ -57,7 +54,6 @@ services:
       - midpoint_home:/opt/midpoint/var
     networks:
       - lab-net
-
   asterisk:
     image: andrius/asterisk:20
     container_name: lab-asterisk
@@ -77,7 +73,7 @@ services:
       - ./asterisk/config:/etc/asterisk
       - ./asterisk/render-and-start.sh:/usr/local/bin/render-and-start.sh:ro
       - asterisk_data:/var/lib/asterisk
-
+      - recordings_data:/var/spool/asterisk/monitor
   call-monitor-backend:
     build:
       context: ./call-monitor-backend
@@ -108,15 +104,15 @@ services:
       - "4000:4000"
     volumes:
       - ./asterisk/config:/asterisk-config
+      - recordings_data:/recordings:ro
     networks:
       - lab-net
-
 networks:
   lab-net:
     driver: bridge
-
 volumes:
   postgres_data:
   db_data:
   midpoint_home:
   asterisk_data:
+  recordings_data:

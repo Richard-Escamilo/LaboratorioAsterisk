@@ -91,7 +91,7 @@ password=changeme_1003
 
 [1003](aor-base)
 
-[1004](webrtc-endpoint-base)
+[1004](endpoint-base)
 auth=auth1004
 aors=1004
 

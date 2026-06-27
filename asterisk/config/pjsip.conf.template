@@ -127,7 +127,7 @@ aors=2002
 
 [auth2002](auth-base)
 username=2002
-password=4r4wt5p5akAa1!
+password=NuevaClave123
 
 [2002](aor-base)
 
@@ -140,3 +140,53 @@ username=2003
 password=lvuxtkekfbAa1!
 
 [2003](aor-base)
+
+[2004](webrtc-endpoint-base)
+auth=auth2004
+aors=2004
+
+[auth2004](auth-base)
+username=2004
+password=Test1234A
+
+[2004](aor-base)
+
+[2005](webrtc-endpoint-base)
+auth=auth2005
+aors=2005
+
+[auth2005](auth-base)
+username=2005
+password=Richard*2!
+
+[2005](aor-base)
+
+[2006](webrtc-endpoint-base)
+auth=auth2006
+aors=2006
+
+[auth2006](auth-base)
+username=2006
+password=Prueba123A
+
+[2006](aor-base)
+
+[2007](webrtc-endpoint-base)
+auth=auth2007
+aors=2007
+
+[auth2007](auth-base)
+username=2007
+password=Pru3ba2v2
+
+[2007](aor-base)
+
+[2008](webrtc-endpoint-base)
+auth=auth2008
+aors=2008
+
+[auth2008](auth-base)
+username=2008
+password=T3stPru3ba!
+
+[2008](aor-base)

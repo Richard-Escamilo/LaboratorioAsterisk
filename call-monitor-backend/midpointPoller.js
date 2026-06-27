@@ -54,7 +54,8 @@ async function provisionUser(username, roleConfig) {
     if (extensionExists(String(extension))) return;
     appendExtension(String(extension), password);
     await db.addUserExtensionWithPassword(username, String(extension), roleConfig.role, password);
-    ami.action({ Action: "Command", Command: "module reload res_pjsip.so" }, () => {});
+    await ami.reloadPjsip();
+    await new Promise((r) => setTimeout(r, 1500));
     console.log(`[midpoint-poller] APROVISIONADO (SIP) usuario=${username} rol=${roleConfig.role} extension=${extension} password=${password}`);
   } else {
     await db.addUserExtensionWithPassword(username, null, roleConfig.role, password);

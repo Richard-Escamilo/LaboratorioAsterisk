@@ -8,7 +8,9 @@ const { startMidpointPoller } = require("./midpointPoller");
 const db = require("./db");
 const { appendExtension } = require("./provisionPjsip");
 const onlineStatus = require("./onlineStatus");
-const { createUserInMidpoint } = require("./midpointAdmin");
+const { createUserInMidpoint, updateUserInMidpoint } = require("./midpointAdmin");
+const { updateExtensionPassword } = require("./provisionPjsip");
+const { provisionUserWithKnownPassword } = require("./provisioning");
 
 const ALLOWED_ROLES = ["AgenteCallCenter"];
 const bcrypt = require("bcryptjs");
@@ -215,11 +217,21 @@ app.post("/api/admin/users", authMiddleware, async (req, res) => {
   try {
     await createUserInMidpoint({ username, fullName, password, role });
 
+    const provisionResult = await provisionUserWithKnownPassword(username, password, role);
+
     if (role === "AgenteCallCenter" && supervisorUsername) {
       await db.assignAgentToSupervisor(supervisorUsername, username);
     }
 
-    res.json({ status: "creado", username, role, note: "El aprovisionamiento SIP se completa automaticamente en hasta 20s" });
+    res.json({
+      status: "creado",
+      username,
+      role,
+      extension: provisionResult.extension || null,
+      note: provisionResult.extension
+        ? `Extension SIP ${provisionResult.extension} creada de inmediato con la contrasena que ingresaste.`
+        : "Usuario creado (este rol no requiere extension SIP).",
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -229,6 +241,69 @@ app.get("/api/admin/supervisors", authMiddleware, async (req, res) => {
   if (req.user.role !== "Admin") return res.status(403).json({ error: "No autorizado" });
   const supervisors = await db.getUsersByRole("Supervisor");
   res.json({ supervisors });
+});
+
+app.get("/api/admin/all-users", authMiddleware, async (req, res) => {
+  if (req.user.role !== "Admin") return res.status(403).json({ error: "No autorizado" });
+  const users = await db.getAllUsersWithDetails();
+  const active = await db.getActiveSessions();
+  const enriched = users.map((u) => ({
+    ...u,
+    online: u.extension ? onlineStatus.isOnline(u.extension) : false,
+    inCall: u.extension ? active.some((s) => s.caller_ext === u.extension || s.callee_ext === u.extension) : false,
+  }));
+  res.json({ users: enriched });
+});
+
+app.get("/api/admin/all-calls", authMiddleware, async (req, res) => {
+  if (req.user.role !== "Admin") return res.status(403).json({ error: "No autorizado" });
+  const calls = await db.getAllCallsAdmin(100);
+  const withParties = calls.map((c) => ({
+    ...c,
+    other_party: `${c.caller_ext} -> ${c.callee_ext}`,
+    direction: "—",
+  }));
+  res.json({ calls: withParties });
+});
+
+app.put("/api/admin/users/:username", authMiddleware, async (req, res) => {
+  if (req.user.role !== "Admin") return res.status(403).json({ error: "No autorizado" });
+  const { username } = req.params;
+  const { newRole, newSupervisor, newPassword } = req.body;
+
+  const current = await db.getUserExtensionRow(username);
+  if (!current) return res.status(404).json({ error: "Usuario no encontrado" });
+
+  try {
+    await updateUserInMidpoint({
+      username,
+      oldRole: current.role,
+      newRole: newRole || current.role,
+      newPassword: newPassword || null,
+    });
+
+    if (newRole && newRole !== current.role) {
+      await db.updateUserRole(username, newRole);
+    }
+
+    if (newSupervisor !== undefined) {
+      await db.reassignSupervisor(username, newSupervisor || null);
+    }
+
+    if (newPassword) {
+      const hash = await bcrypt.hash(newPassword, 10);
+      await db.updateUserPasswordHash(username, hash);
+      if (current.extension) {
+        updateExtensionPassword(current.extension, newPassword);
+        await ami.reloadPjsip();
+        await new Promise((r) => setTimeout(r, 1500));
+      }
+    }
+
+    res.json({ status: "actualizado", username });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));

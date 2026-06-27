@@ -229,3 +229,55 @@ async function getUsersByRole(role) {
 }
 
 module.exports.getUsersByRole = getUsersByRole;
+
+async function getUserExtensionRow(username) {
+  const [rows] = await pool.execute(`SELECT * FROM user_extensions WHERE username = ?`, [username]);
+  return rows[0] || null;
+}
+
+async function updateUserRole(username, newRole) {
+  await pool.execute(`UPDATE user_extensions SET role = ? WHERE username = ?`, [newRole, username]);
+}
+
+async function updateUserPasswordHash(username, passwordHash) {
+  await pool.execute(`UPDATE user_extensions SET password_hash = ? WHERE username = ?`, [passwordHash, username]);
+}
+
+async function reassignSupervisor(agentUsername, newSupervisorUsername) {
+  await pool.execute(`DELETE FROM supervisor_agents WHERE agent_username = ?`, [agentUsername]);
+  if (newSupervisorUsername) {
+    await pool.execute(
+      `INSERT IGNORE INTO supervisor_agents (supervisor_username, agent_username) VALUES (?, ?)`,
+      [newSupervisorUsername, agentUsername]
+    );
+  }
+}
+
+async function getAllUsersWithDetails() {
+  const [rows] = await pool.execute(`
+    SELECT ue.username, ue.extension, ue.role, sa.supervisor_username
+    FROM user_extensions ue
+    LEFT JOIN supervisor_agents sa ON sa.agent_username = ue.username
+    ORDER BY ue.role, ue.username
+  `);
+  return rows;
+}
+
+async function getAllCallsAdmin(limit = 100) {
+  const [rows] = await pool.execute(
+    `SELECT *,
+       CASE WHEN bridged_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, bridged_at, ended_at) ELSE 0 END AS duration_seconds
+     FROM call_history
+     ORDER BY ended_at DESC
+     LIMIT ?`,
+    [limit]
+  );
+  return rows;
+}
+
+module.exports.getUserExtensionRow = getUserExtensionRow;
+module.exports.updateUserRole = updateUserRole;
+module.exports.updateUserPasswordHash = updateUserPasswordHash;
+module.exports.reassignSupervisor = reassignSupervisor;
+module.exports.getAllUsersWithDetails = getAllUsersWithDetails;
+module.exports.getAllCallsAdmin = getAllCallsAdmin;

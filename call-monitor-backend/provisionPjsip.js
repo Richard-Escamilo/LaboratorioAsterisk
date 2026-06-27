@@ -25,3 +25,15 @@ function appendExtension(extension, password) {
 }
 
 module.exports = { appendExtension, extensionExists };
+
+function updateExtensionPassword(extension, newPassword) {
+  for (const file of [PJSIP_LIVE, PJSIP_TEMPLATE]) {
+    const content = fs.readFileSync(file, "utf8");
+    const re = new RegExp(`(\\[auth${extension}\\]\\([^)]*\\)\\nusername=${extension}\\npassword=)[^\\n]*`);
+    if (!re.test(content)) continue;
+    const updated = content.replace(re, `$1${newPassword}`);
+    fs.writeFileSync(file, updated);
+  }
+}
+
+module.exports.updateExtensionPassword = updateExtensionPassword;

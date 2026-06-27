@@ -1,0 +1,78 @@
+{
+  "title": "Infraestructura - CPU, RAM, Disco, Red",
+  "timezone": "browser",
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "title": "CPU usado (%)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "percent", "max": 100, "min": 0 } },
+      "targets": [{
+        "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+        "datasource": { "type": "prometheus", "uid": "Prometheus" }
+      }]
+    },
+    {
+      "title": "Memoria usada (%)",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 6, "x": 6, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "percent", "max": 100, "min": 0 } },
+      "targets": [{
+        "expr": "(1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100",
+        "datasource": { "type": "prometheus", "uid": "Prometheus" }
+      }]
+    },
+    {
+      "title": "Disco usado (%) - /",
+      "type": "gauge",
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "percent", "max": 100, "min": 0 } },
+      "targets": [{
+        "expr": "(1 - (node_filesystem_avail_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"} / node_filesystem_size_bytes{mountpoint=\"/\",fstype!=\"tmpfs\"})) * 100",
+        "datasource": { "type": "prometheus", "uid": "Prometheus" }
+      }]
+    },
+    {
+      "title": "Memoria disponible",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 0 },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "targets": [{
+        "expr": "node_memory_MemAvailable_bytes",
+        "datasource": { "type": "prometheus", "uid": "Prometheus" }
+      }]
+    },
+    {
+      "title": "Trafico de red (bytes/seg) - todas las interfaces",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "targets": [
+        { "expr": "rate(node_network_receive_bytes_total{device!=\"lo\"}[5m])", "legendFormat": "Recibido {{device}}", "datasource": { "type": "prometheus", "uid": "Prometheus" } },
+        { "expr": "rate(node_network_transmit_bytes_total{device!=\"lo\"}[5m])", "legendFormat": "Enviado {{device}}", "datasource": { "type": "prometheus", "uid": "Prometheus" } }
+      ]
+    },
+    {
+      "title": "CPU por contenedor",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [{
+        "expr": "rate(container_cpu_usage_seconds_total{name!=\"\"}[5m])",
+        "legendFormat": "{{name}}",
+        "datasource": { "type": "prometheus", "uid": "Prometheus" }
+      }]
+    },
+    {
+      "title": "Memoria por contenedor",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "targets": [{
+        "expr": "container_memory_usage_bytes{name!=\"\"}",
+        "legendFormat": "{{name}}",
+        "datasource": { "type": "prometheus", "uid": "Prometheus" }
+      }]
+    }
+  ]
+}

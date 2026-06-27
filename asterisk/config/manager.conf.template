@@ -8,4 +8,4 @@ secret=${AMI_PASSWORD}
 deny=0.0.0.0/0.0.0.0
 permit=172.16.0.0/12
 read=call,system,dialplan
-write=call,system,command
+write=call,system,command,originate

@@ -68,6 +68,7 @@
         <button class="tab-btn" data-tab="phone">Teléfono</button>
         <button class="tab-btn" data-tab="history">Histórico</button>
         <button class="tab-btn hidden" id="teamTabBtn" data-tab="team">Mi equipo</button>
+        <button class="tab-btn hidden" id="adminTabBtn" data-tab="admin">Admin</button>
       </div>
 
       <!-- ============ DASHBOARD ============ -->
@@ -148,6 +149,36 @@
         <div class="pagination" id="historyPagination"></div>
       </div>
 
+      <!-- ============ ADMIN: crear usuarios ============ -->
+      <div id="tabAdmin" class="tab-panel hidden">
+        <p class="section-title" style="margin-top:0">Crear usuario</p>
+        <div id="adminMsg" class="hidden"></div>
+
+        <label for="adminUsername">Usuario</label>
+        <input id="adminUsername" placeholder="agente3">
+
+        <label for="adminFullName">Nombre completo</label>
+        <input id="adminFullName" placeholder="Agente Tres">
+
+        <label for="adminPassword">Contraseña inicial</label>
+        <input id="adminPassword" type="password" placeholder="mín. 8 caracteres">
+
+        <label for="adminRole">Rol</label>
+        <select id="adminRole">
+          <option value="AgenteCallCenter">Agente</option>
+          <option value="Supervisor">Supervisor</option>
+          <option value="Admin">Admin</option>
+        </select>
+
+        <div id="adminSupervisorBox">
+          <label for="adminSupervisor">Supervisor asignado</label>
+          <select id="adminSupervisor"></select>
+        </div>
+
+        <button id="btnCreateUser" class="btn-primary" style="margin-top:18px">Crear usuario</button>
+        <p class="hint">La extensión SIP (si aplica) se crea automáticamente en hasta 20 segundos.</p>
+      </div>
+
       <!-- ============ MI EQUIPO (supervisor) ============ -->
       <div id="tabTeam" class="tab-panel hidden">
         <p class="section-title" style="margin-top:0">Resumen del equipo</p>
@@ -194,5 +225,6 @@
 <script src="softphone.js"></script>
 <script src="dashboard-agent.js"></script>
 <script src="dashboard-supervisor.js"></script>
+<script src="dashboard-admin.js"></script>
 </body>
 </html>

@@ -45,6 +45,10 @@ document.getElementById("btnLogin").onclick = async () => {
     if (data.role === "Supervisor" || data.role === "Admin") {
       document.getElementById("teamTabBtn").classList.remove("hidden");
     }
+    if (data.role === "Admin") {
+      document.getElementById("adminTabBtn").classList.remove("hidden");
+      loadSupervisorsDropdown();
+    }
   } catch (err) {
     setLoginStatus("No se pudo conectar al backend: " + err.message, "err");
   }

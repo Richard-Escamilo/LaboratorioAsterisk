@@ -120,3 +120,23 @@ username=2001
 password=jtwxzqrw0sAa1!
 
 [2001](aor-base)
+
+[2002](webrtc-endpoint-base)
+auth=auth2002
+aors=2002
+
+[auth2002](auth-base)
+username=2002
+password=4r4wt5p5akAa1!
+
+[2002](aor-base)
+
+[2003](webrtc-endpoint-base)
+auth=auth2003
+aors=2003
+
+[auth2003](auth-base)
+username=2003
+password=lvuxtkekfbAa1!
+
+[2003](aor-base)

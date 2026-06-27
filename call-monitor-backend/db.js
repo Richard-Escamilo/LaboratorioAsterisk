@@ -213,3 +213,19 @@ async function getCallsByExtensionToday(extension, limit = 20) {
 }
 
 module.exports.getCallsByExtensionToday = getCallsByExtensionToday;
+
+async function assignAgentToSupervisor(supervisorUsername, agentUsername) {
+  await pool.execute(
+    `INSERT IGNORE INTO supervisor_agents (supervisor_username, agent_username) VALUES (?, ?)`,
+    [supervisorUsername, agentUsername]
+  );
+}
+
+module.exports.assignAgentToSupervisor = assignAgentToSupervisor;
+
+async function getUsersByRole(role) {
+  const [rows] = await pool.execute(`SELECT username FROM user_extensions WHERE role = ?`, [role]);
+  return rows.map((r) => r.username);
+}
+
+module.exports.getUsersByRole = getUsersByRole;

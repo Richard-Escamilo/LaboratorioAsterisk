@@ -8,6 +8,7 @@ const { startMidpointPoller } = require("./midpointPoller");
 const db = require("./db");
 const { appendExtension } = require("./provisionPjsip");
 const onlineStatus = require("./onlineStatus");
+const { createUserInMidpoint } = require("./midpointAdmin");
 
 const ALLOWED_ROLES = ["AgenteCallCenter"];
 const bcrypt = require("bcryptjs");
@@ -198,6 +199,36 @@ app.get("/api/supervisor/agent/:username/calls", authMiddleware, async (req, res
   const calls = await db.getCallsByExtension(agent.extension, 15);
   const stats = await db.getDailyStats(agent.extension);
   res.json({ username, extension: agent.extension, calls, stats });
+});
+
+app.post("/api/admin/users", authMiddleware, async (req, res) => {
+  if (req.user.role !== "Admin") {
+    return res.status(403).json({ error: "Solo el Admin puede crear usuarios" });
+  }
+  const { username, fullName, password, role, supervisorUsername } = req.body;
+  if (!username || !password || !role) {
+    return res.status(400).json({ error: "username, password y role son requeridos" });
+  }
+  if (!["AgenteCallCenter", "Supervisor", "Admin"].includes(role)) {
+    return res.status(400).json({ error: "Rol invalido" });
+  }
+  try {
+    await createUserInMidpoint({ username, fullName, password, role });
+
+    if (role === "AgenteCallCenter" && supervisorUsername) {
+      await db.assignAgentToSupervisor(supervisorUsername, username);
+    }
+
+    res.json({ status: "creado", username, role, note: "El aprovisionamiento SIP se completa automaticamente en hasta 20s" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/admin/supervisors", authMiddleware, async (req, res) => {
+  if (req.user.role !== "Admin") return res.status(403).json({ error: "No autorizado" });
+  const supervisors = await db.getUsersByRole("Supervisor");
+  res.json({ supervisors });
 });
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));

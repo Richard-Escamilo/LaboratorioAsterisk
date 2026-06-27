@@ -69,3 +69,23 @@ document.getElementById("btnLogout").onclick = (e) => {
   if (typeof ua !== "undefined" && ua) ua.stop();
   location.reload();
 };
+
+// Refresco automatico cada 5s: historico/dashboard se actualizan
+// sin necesidad de recargar la pagina manualmente.
+setInterval(() => {
+  const token = localStorage.getItem("cc_token");
+  if (!token) return;
+  const appVisible = !document.getElementById("appScreen").classList.contains("hidden");
+  if (!appVisible) return;
+
+  const role = document.getElementById("roleBadge").textContent;
+  const hasPhone = !document.getElementById("phoneTabBtn").classList.contains("hidden");
+
+  if (role === "Admin") {
+    loadAdminHistory(token);
+    loadAllUsers(token);
+    loadAdminDashboard(token);
+  } else if (hasPhone) {
+    loadMyCalls(token);
+  }
+}, 5000);

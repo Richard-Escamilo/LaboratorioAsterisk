@@ -41,8 +41,10 @@ function registerSip(extension, password) {
     session.on("ended", () => { hideIncomingCall(); setStatus("Llamada finalizada"); });
     session.on("failed", (e) => { hideIncomingCall(); setStatus("Llamada falló: " + e.cause, "err"); });
 
-    session.connection.addEventListener("addstream", (e) => {
-      document.getElementById("remoteAudio").srcObject = e.stream;
+    session.on("peerconnection", (e) => {
+      e.peerconnection.addEventListener("track", (event) => {
+        document.getElementById("remoteAudio").srcObject = event.streams[0];
+      });
     });
   });
 

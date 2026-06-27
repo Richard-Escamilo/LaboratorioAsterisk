@@ -38,7 +38,11 @@ async function endCallSession(channelId, cause) {
 }
 
 async function getActiveSessions() {
-  const [rows] = await pool.execute(`SELECT * FROM call_sessions ORDER BY started_at DESC`);
+  // Ignoramos sesiones "atascadas" de mas de 2 horas: si nunca recibieron
+  // su evento Hangup correspondiente, no deben seguir contando como activas.
+  const [rows] = await pool.execute(
+    `SELECT * FROM call_sessions WHERE started_at > NOW() - INTERVAL 2 HOUR ORDER BY started_at DESC`
+  );
   return rows;
 }
 

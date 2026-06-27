@@ -39,6 +39,14 @@ document.getElementById("btnLogin").onclick = async () => {
       document.getElementById("noPhoneBox").classList.add("hidden");
       registerSip(data.extension, password);
       loadMyCalls(data.token);
+
+      document.getElementById("userExtInfo").classList.remove("hidden");
+      document.getElementById("userExtValue").textContent = data.extension;
+
+      if (data.supervisor) {
+        document.getElementById("userSupervisorInfo").classList.remove("hidden");
+        document.getElementById("userSupervisorValue").textContent = data.supervisor;
+      }
     } else {
       // No tiene telefono (Admin): ocultamos la pestaña por completo
       document.getElementById("phoneTabBtn").classList.add("hidden");

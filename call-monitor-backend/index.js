@@ -125,7 +125,11 @@ app.post("/api/login", async (req, res) => {
     JWT_SECRET,
     { expiresIn: "8h" }
   );
-  res.json({ token, username: user.username, extension: user.extension, role: user.role });
+  let supervisor = null;
+  if (user.role === "AgenteCallCenter") {
+    supervisor = await db.getSupervisorOfAgent(user.username);
+  }
+  res.json({ token, username: user.username, extension: user.extension, role: user.role, supervisor });
 });
 
 app.get("/api/me/calls", authMiddleware, async (req, res) => {

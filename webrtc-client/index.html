@@ -53,6 +53,18 @@
 </div>
 
 <div id="appScreen" class="hidden">
+  <div id="floatingCallWidget" class="floating-call-widget hidden">
+    <div class="fc-label" id="fcLabel">Llamada entrante</div>
+    <div class="fc-from" id="fcFrom">—</div>
+    <div class="fc-status" id="fcStatus">Sonando...</div>
+    <div id="fcIncomingActions" class="fc-actions hidden">
+      <button id="btnAnswerFloat" class="fc-btn-answer">Contestar</button>
+      <button id="btnRejectFloat" class="fc-btn-reject">Rechazar</button>
+    </div>
+    <div id="fcInCallActions" class="fc-actions hidden">
+      <button id="btnHangupFloat" class="fc-btn-hangup">Colgar</button>
+    </div>
+  </div>
   <div class="card">
     <div class="card-head">
       <h2>Consola</h2>
@@ -61,6 +73,8 @@
     <div class="card-body">
       <div class="user-row">
         <span>Sesión: <span id="welcomeUser" class="mono"></span></span>
+        <span id="userExtInfo" class="hidden">&nbsp;·&nbsp;Ext: <span id="userExtValue" class="mono"></span></span>
+        <span id="userSupervisorInfo" class="hidden">&nbsp;·&nbsp;Supervisor: <span id="userSupervisorValue" class="mono"></span></span>
         <a href="#" id="btnLogout">Cerrar sesión</a>
       </div>
 
@@ -130,13 +144,6 @@
 
       <!-- ============ TELEFONO ============ -->
       <div id="tabPhone" class="tab-panel hidden">
-        <div id="incomingCallBox" class="incoming-call-box hidden">
-          <p>Llamada entrante de <b id="incomingCallFrom"></b></p>
-          <div class="call-actions">
-            <button id="btnAnswer" class="btn-call">Contestar</button>
-            <button id="btnReject" class="btn-hangup">Rechazar</button>
-          </div>
-        </div>
 
         <div id="status">Sin conectar</div>
 
@@ -145,7 +152,6 @@
           <div class="dial-row"><input id="target" placeholder="1004"></div>
           <div class="call-actions">
             <button id="btnCall" class="btn-call">Llamar</button>
-            <button id="btnHangup" class="btn-hangup">Colgar</button>
           </div>
         </div>
 
@@ -155,7 +161,7 @@
 
         <p class="section-title">Llamadas de hoy</p>
         <table class="calls-table">
-          <thead><tr><th>Hora</th><th>Llamada</th><th>Duración</th></tr></thead>
+          <thead><tr><th>Hora</th><th>Con</th><th>Dirección</th><th>Duración</th></tr></thead>
           <tbody id="callsTodayTableBody"></tbody>
         </table>
         <div id="noCallsTodayMsg" class="no-calls hidden">Aún no hay llamadas hoy.</div>
@@ -166,7 +172,7 @@
       <div id="tabHistory" class="tab-panel hidden">
         <p class="section-title" style="margin-top:0">Historial completo de llamadas</p>
         <table class="calls-table">
-          <thead><tr><th>Hora</th><th>Llamada</th><th>Duración</th></tr></thead>
+          <thead><tr><th>Hora</th><th>Con</th><th>Dirección</th><th>Duración</th></tr></thead>
           <tbody id="callsTableBody"></tbody>
         </table>
         <div id="noCallsMsg" class="no-calls hidden">Aún no hay llamadas registradas.</div>
@@ -300,7 +306,7 @@
         <div class="stat-box"><div class="label">TMO</div><div class="value" id="modalTmo">00:00</div></div>
       </div>
       <table class="calls-table">
-        <thead><tr><th>Hora</th><th>Llamada</th><th>Duración</th></tr></thead>
+        <thead><tr><th>Hora</th><th>Con</th><th>Dirección</th><th>Duración</th></tr></thead>
         <tbody id="modalCallsBody"></tbody>
       </table>
     </div>

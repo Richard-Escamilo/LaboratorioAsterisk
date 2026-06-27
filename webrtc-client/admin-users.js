@@ -42,7 +42,8 @@ async function loadAdminHistory(token) {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
-    fillCallsTable("callsTableBody", data.calls || [], "noCallsMsg", "historyPagination");
+    setTableHeader("callsTableBody", ["Fecha/Hora", "Llamada", "Duración"]);
+    fillCallsTable("callsTableBody", data.calls || [], "noCallsMsg", "historyPagination", true);
   } catch (err) {
     console.error("Error cargando historico admin:", err);
   }

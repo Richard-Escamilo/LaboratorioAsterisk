@@ -400,3 +400,13 @@ async function getAvailabilityCount() {
 module.exports.getDirectionBreakdown = getDirectionBreakdown;
 module.exports.getAgentRanking = getAgentRanking;
 module.exports.getAvailabilityCount = getAvailabilityCount;
+
+async function getSupervisorOfAgent(agentUsername) {
+  const [rows] = await pool.execute(
+    `SELECT supervisor_username FROM supervisor_agents WHERE agent_username = ?`,
+    [agentUsername]
+  );
+  return rows[0] ? rows[0].supervisor_username : null;
+}
+
+module.exports.getSupervisorOfAgent = getSupervisorOfAgent;

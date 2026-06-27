@@ -7,13 +7,17 @@ function setStatus(text, cls) {
   el.className = cls || "";
 }
 
-function showIncomingCall(fromUser) {
-  document.getElementById("incomingCallFrom").textContent = fromUser;
-  document.getElementById("incomingCallBox").classList.remove("hidden");
+function showFloatingWidget({ label, from, status, incoming }) {
+  document.getElementById("fcLabel").textContent = label;
+  document.getElementById("fcFrom").textContent = from;
+  document.getElementById("fcStatus").textContent = status;
+  document.getElementById("fcIncomingActions").classList.toggle("hidden", !incoming);
+  document.getElementById("fcInCallActions").classList.toggle("hidden", incoming);
+  document.getElementById("floatingCallWidget").classList.remove("hidden");
 }
 
-function hideIncomingCall() {
-  document.getElementById("incomingCallBox").classList.add("hidden");
+function hideFloatingWidget() {
+  document.getElementById("floatingCallWidget").classList.add("hidden");
 }
 
 function registerSip(extension, password) {
@@ -26,20 +30,28 @@ function registerSip(extension, password) {
     session_timers: false,
   });
 
-  ua.on("registered", () => setStatus(`Registrado como ${extension}`, "ok"));
+  ua.on("registered", () => setStatus("Conectado", "ok"));
   ua.on("unregistered", () => setStatus("Sin registrar"));
   ua.on("registrationFailed", (e) => setStatus("Error al registrar: " + e.cause, "err"));
 
   ua.on("newRTCSession", (data) => {
     session = data.session;
+    const otherParty = session.direction === "incoming"
+      ? data.request.from.uri.user
+      : document.getElementById("target").value;
 
     if (session.direction === "incoming") {
-      showIncomingCall(data.request.from.uri.user);
+      showFloatingWidget({ label: "Llamada entrante", from: otherParty, status: "Sonando...", incoming: true });
+    } else {
+      showFloatingWidget({ label: "Llamando a", from: otherParty, status: "Marcando...", incoming: false });
     }
 
-    session.on("accepted", () => { hideIncomingCall(); setStatus("En llamada", "ok"); });
-    session.on("ended", () => { hideIncomingCall(); setStatus("Llamada finalizada"); });
-    session.on("failed", (e) => { hideIncomingCall(); setStatus("Llamada falló: " + e.cause, "err"); });
+    session.on("accepted", () => {
+      setStatus("En llamada", "ok");
+      showFloatingWidget({ label: session.direction === "incoming" ? "Llamada de" : "Llamando a", from: otherParty, status: "En llamada", incoming: false });
+    });
+    session.on("ended", () => { hideFloatingWidget(); setStatus("Llamada finalizada"); });
+    session.on("failed", (e) => { hideFloatingWidget(); setStatus("Llamada falló: " + e.cause, "err"); });
 
     session.on("peerconnection", (e) => {
       e.peerconnection.addEventListener("track", (event) => {
@@ -57,16 +69,16 @@ document.getElementById("btnCall").onclick = () => {
   ua.call(`sip:${target}@${HOST}`, { mediaConstraints: { audio: true, video: false } });
 };
 
-document.getElementById("btnHangup").onclick = () => {
-  if (session) session.terminate();
-};
-
-document.getElementById("btnAnswer").onclick = () => {
+document.getElementById("btnAnswerFloat").onclick = () => {
   if (session) session.answer({ mediaConstraints: { audio: true, video: false } });
-  hideIncomingCall();
 };
 
-document.getElementById("btnReject").onclick = () => {
+document.getElementById("btnRejectFloat").onclick = () => {
   if (session) session.terminate();
-  hideIncomingCall();
+  hideFloatingWidget();
+};
+
+document.getElementById("btnHangupFloat").onclick = () => {
+  if (session) session.terminate();
+  hideFloatingWidget();
 };

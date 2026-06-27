@@ -11,7 +11,7 @@ function formatDuration(seconds) {
 
 function formatTime(isoString) {
   const d = new Date(isoString);
-  return d.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleString("es-PE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 }
 
 // ---------------- Pestañas ----------------
@@ -30,18 +30,26 @@ document.querySelectorAll(".tab-btn").forEach((btn) => {
 const PAGE_SIZE = 10;
 const paginationState = {};
 
-function renderCallRows(tbodyId, calls) {
+function renderCallRows(tbodyId, calls, adminMode) {
   const tbody = document.getElementById(tbodyId);
   tbody.innerHTML = "";
   calls.forEach((call) => {
     const tr = document.createElement("tr");
     const duration = call.duration_seconds > 0 ? formatDuration(call.duration_seconds) : "No contestada";
-    tr.innerHTML = `
-      <td class="mono">${formatTime(call.ended_at)}</td>
-      <td class="mono">${call.other_party}</td>
-      <td><span class="dir-badge dir-${call.direction}">${call.direction}</span></td>
-      <td class="mono">${duration}</td>
-    `;
+    if (adminMode) {
+      tr.innerHTML = `
+        <td class="mono">${formatTime(call.ended_at)}</td>
+        <td class="mono">${call.other_party}</td>
+        <td class="mono">${duration}</td>
+      `;
+    } else {
+      tr.innerHTML = `
+        <td class="mono">${formatTime(call.ended_at)}</td>
+        <td class="mono">${call.other_party}</td>
+        <td><span class="dir-badge dir-${call.direction}">${call.direction}</span></td>
+        <td class="mono">${duration}</td>
+      `;
+    }
     tbody.appendChild(tr);
   });
 }
@@ -76,11 +84,17 @@ function renderPageFor(tbodyId, paginationId, noMsgId) {
   document.getElementById(noMsgId).classList.add("hidden");
   const start = (state.page - 1) * PAGE_SIZE;
   const pageItems = state.calls.slice(start, start + PAGE_SIZE);
-  renderCallRows(tbodyId, pageItems);
+  renderCallRows(tbodyId, pageItems, state.adminMode);
   renderPaginationControls(tbodyId, paginationId);
 }
 
-function fillCallsTable(tbodyId, calls, noMsgId, paginationId) {
-  paginationState[tbodyId] = { calls, page: 1, noMsgId };
+function fillCallsTable(tbodyId, calls, noMsgId, paginationId, adminMode) {
+  paginationState[tbodyId] = { calls, page: 1, noMsgId, adminMode: !!adminMode };
   renderPageFor(tbodyId, paginationId, noMsgId);
+}
+
+function setTableHeader(tbodyId, columns) {
+  const tbody = document.getElementById(tbodyId);
+  const thead = tbody.closest("table").querySelector("thead tr");
+  thead.innerHTML = columns.map((c) => `<th>${c}</th>`).join("");
 }

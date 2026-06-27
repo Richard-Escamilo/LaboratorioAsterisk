@@ -37,3 +37,20 @@ function updateExtensionPassword(extension, newPassword) {
 }
 
 module.exports.updateExtensionPassword = updateExtensionPassword;
+
+function setCodecAllow(allowValue) {
+  for (const file of [PJSIP_LIVE, PJSIP_TEMPLATE]) {
+    let content = fs.readFileSync(file, "utf8");
+    content = content.replace(
+      /(\[webrtc-endpoint-base\]\(!\)[\s\S]*?allow=)[^\n]*/,
+      `$1${allowValue}`
+    );
+    content = content.replace(
+      /(\[endpoint-base\]\(!\)[\s\S]*?allow=)[^\n]*/,
+      `$1${allowValue}`
+    );
+    fs.writeFileSync(file, content);
+  }
+}
+
+module.exports.setCodecAllow = setCodecAllow;

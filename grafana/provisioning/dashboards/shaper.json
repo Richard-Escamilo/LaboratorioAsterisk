@@ -1,0 +1,64 @@
+{
+  "title": "Shaper de Codec",
+  "timezone": "browser",
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "title": "Tier actual",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "FULL", "color": "green" } } },
+            { "type": "value", "options": { "1": { "text": "MIXED", "color": "yellow" } } },
+            { "type": "value", "options": { "2": { "text": "DOWNGRADED", "color": "red" } } }
+          ],
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 2 }
+            ]
+          }
+        }
+      },
+      "targets": [{ "expr": "callcenter_shaper_tier", "datasource": { "type": "prometheus", "uid": "Prometheus" } }]
+    },
+    {
+      "title": "Llamadas activas",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "targets": [{ "expr": "callcenter_shaper_active_calls", "datasource": { "type": "prometheus", "uid": "Prometheus" } }]
+    },
+    {
+      "title": "Codec activo (detalle)",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "targets": [{ "expr": "callcenter_shaper_info", "format": "table", "instant": true, "datasource": { "type": "prometheus", "uid": "Prometheus" } }]
+    },
+    {
+      "title": "Tier en el tiempo",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "FULL" } } },
+            { "type": "value", "options": { "1": { "text": "MIXED" } } },
+            { "type": "value", "options": { "2": { "text": "DOWNGRADED" } } }
+          ]
+        }
+      },
+      "targets": [{ "expr": "callcenter_shaper_tier", "datasource": { "type": "prometheus", "uid": "Prometheus" } }]
+    },
+    {
+      "title": "Llamadas activas en el tiempo",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+      "targets": [{ "expr": "callcenter_shaper_active_calls", "datasource": { "type": "prometheus", "uid": "Prometheus" } }]
+    }
+  ]
+}

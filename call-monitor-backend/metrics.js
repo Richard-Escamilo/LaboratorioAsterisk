@@ -1,6 +1,7 @@
 const client = require("prom-client");
 const db = require("./db");
 const onlineStatus = require("./onlineStatus");
+const shaper = require("./shaper");
 
 const register = new client.Registry();
 client.collectDefaultMetrics({ register });
@@ -41,6 +42,25 @@ const agentsTotal = new client.Gauge({
   registers: [register],
 });
 
+const shaperTier = new client.Gauge({
+  name: "callcenter_shaper_tier",
+  help: "Tier actual del shaper de codec: 0=FULL, 1=MIXED, 2=DOWNGRADED",
+  registers: [register],
+});
+
+const shaperInfo = new client.Gauge({
+  name: "callcenter_shaper_info",
+  help: "Info del shaper actual (tier y codec activo como labels)",
+  labelNames: ["tier", "allow"],
+  registers: [register],
+});
+
+const shaperActiveCalls = new client.Gauge({
+  name: "callcenter_shaper_active_calls",
+  help: "Llamadas activas reales en Asterisk (incluye pruebas de carga), usadas por el shaper",
+  registers: [register],
+});
+
 async function refreshMetrics() {
   const active = await db.getActiveSessions();
   activeCalls.set(active.length);
@@ -53,6 +73,12 @@ async function refreshMetrics() {
   const users = await db.getAvailabilityCount();
   agentsTotal.set(users.length);
   agentsOnline.set(users.filter((u) => onlineStatus.isOnline(u.extension)).length);
+
+  const shaperState = shaper.getCurrentTierInfo();
+  shaperTier.set(shaperState.numeric);
+  shaperInfo.reset();
+  shaperInfo.set({ tier: shaperState.tier, allow: shaperState.allow }, 1);
+  shaperActiveCalls.set(shaperState.activeCalls);
 }
 
 module.exports = { register, refreshMetrics };

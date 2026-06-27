@@ -5,6 +5,7 @@ const https = require("https");
 const fs = require("fs");
 const { Server } = require("socket.io");
 const { startMidpointPoller } = require("./midpointPoller");
+const { startShaper } = require("./shaper");
 const db = require("./db");
 const { appendExtension } = require("./provisionPjsip");
 const onlineStatus = require("./onlineStatus");
@@ -370,3 +371,4 @@ const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => console.log(`[call-monitor-backend] escuchando en :${PORT}`));
 
 startMidpointPoller();
+startShaper();

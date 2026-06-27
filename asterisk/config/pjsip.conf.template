@@ -30,7 +30,7 @@ bind=0.0.0.0:8089
 [endpoint-base](!)
 type=endpoint
 context=internal
-disallow=all
+disallow=gsm
 allow=ulaw,alaw,opus
 direct_media=no
 dtmf_mode=rfc4733
@@ -51,7 +51,7 @@ remove_existing=yes
 [webrtc-endpoint-base](!)
 type=endpoint
 context=internal
-disallow=all
+disallow=gsm
 allow=ulaw
 webrtc=yes
 dtls_auto_generate_cert=yes

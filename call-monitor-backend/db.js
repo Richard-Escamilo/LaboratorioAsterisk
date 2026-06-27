@@ -281,3 +281,122 @@ module.exports.updateUserPasswordHash = updateUserPasswordHash;
 module.exports.reassignSupervisor = reassignSupervisor;
 module.exports.getAllUsersWithDetails = getAllUsersWithDetails;
 module.exports.getAllCallsAdmin = getAllCallsAdmin;
+
+async function getRecordingsSummaryByUser() {
+  const [rows] = await pool.execute(`
+    SELECT ue.username, ue.extension,
+      COUNT(ch.id) AS recorded_count
+    FROM user_extensions ue
+    LEFT JOIN call_history ch
+      ON (ch.caller_ext = ue.extension OR ch.callee_ext = ue.extension) AND ch.bridged_at IS NOT NULL
+    WHERE ue.extension IS NOT NULL
+    GROUP BY ue.username, ue.extension
+    ORDER BY ue.username
+  `);
+  return rows;
+}
+
+async function getRecordedCallsByExtension(extension) {
+  const [rows] = await pool.execute(`
+    SELECT *,
+      CASE WHEN caller_ext = ? THEN callee_ext ELSE caller_ext END AS other_party,
+      CASE WHEN caller_ext = ? THEN 'saliente' ELSE 'entrante' END AS direction,
+      TIMESTAMPDIFF(SECOND, bridged_at, ended_at) AS duration_seconds
+    FROM call_history
+    WHERE (caller_ext = ? OR callee_ext = ?) AND bridged_at IS NOT NULL
+    ORDER BY ended_at DESC
+  `, [extension, extension, extension, extension]);
+  return rows;
+}
+
+module.exports.getRecordingsSummaryByUser = getRecordingsSummaryByUser;
+module.exports.getRecordedCallsByExtension = getRecordedCallsByExtension;
+
+async function getGlobalDailyStats() {
+  const [rows] = await pool.execute(`
+    SELECT COUNT(*) AS total_calls,
+      SUM(CASE WHEN bridged_at IS NOT NULL THEN 1 ELSE 0 END) AS answered_calls,
+      AVG(CASE WHEN bridged_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, bridged_at, ended_at) END) AS avg_duration_seconds
+    FROM call_history
+    WHERE DATE(DATE_SUB(started_at, INTERVAL 5 HOUR)) = DATE(DATE_SUB(NOW(), INTERVAL 5 HOUR))
+  `);
+  return rows[0];
+}
+
+async function getGlobalTotalStats() {
+  const [rows] = await pool.execute(`
+    SELECT COUNT(*) AS total_calls,
+      SUM(CASE WHEN bridged_at IS NOT NULL THEN 1 ELSE 0 END) AS answered_calls,
+      AVG(CASE WHEN bridged_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, bridged_at, ended_at) END) AS avg_duration_seconds
+    FROM call_history
+  `);
+  return rows[0];
+}
+
+async function getGlobalHourlyStats() {
+  const [rows] = await pool.execute(`
+    SELECT HOUR(DATE_SUB(started_at, INTERVAL 5 HOUR)) AS hour, COUNT(*) AS count
+    FROM call_history
+    WHERE DATE(DATE_SUB(started_at, INTERVAL 5 HOUR)) = DATE(DATE_SUB(NOW(), INTERVAL 5 HOUR))
+    GROUP BY HOUR(DATE_SUB(started_at, INTERVAL 5 HOUR))
+  `);
+  const hourly = Array(24).fill(0);
+  rows.forEach((r) => { hourly[r.hour] = r.count; });
+  return hourly;
+}
+
+async function getGlobalDailyTrend(days = 14) {
+  const [rows] = await pool.execute(`
+    SELECT DATE(DATE_SUB(started_at, INTERVAL 5 HOUR)) AS day,
+      COUNT(*) AS count,
+      SUM(CASE WHEN bridged_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, bridged_at, ended_at) ELSE 0 END) AS total_duration
+    FROM call_history
+    WHERE started_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+    GROUP BY day ORDER BY day ASC
+  `, [days]);
+  return rows;
+}
+
+module.exports.getGlobalDailyStats = getGlobalDailyStats;
+module.exports.getGlobalTotalStats = getGlobalTotalStats;
+module.exports.getGlobalHourlyStats = getGlobalHourlyStats;
+module.exports.getGlobalDailyTrend = getGlobalDailyTrend;
+
+async function getDirectionBreakdown(extension) {
+  const [rows] = await pool.execute(`
+    SELECT
+      SUM(CASE WHEN caller_ext = ? THEN 1 ELSE 0 END) AS saliente,
+      SUM(CASE WHEN callee_ext = ? THEN 1 ELSE 0 END) AS entrante
+    FROM call_history
+    WHERE caller_ext = ? OR callee_ext = ?
+  `, [extension, extension, extension, extension]);
+  return rows[0];
+}
+
+async function getAgentRanking(limit = 10) {
+  const [rows] = await pool.execute(`
+    SELECT ue.username, ue.extension,
+      COUNT(ch.id) AS total_calls,
+      AVG(CASE WHEN ch.bridged_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, ch.bridged_at, ch.ended_at) END) AS avg_duration_seconds
+    FROM user_extensions ue
+    LEFT JOIN call_history ch
+      ON (ch.caller_ext = ue.extension OR ch.callee_ext = ue.extension)
+      AND DATE(DATE_SUB(ch.started_at, INTERVAL 5 HOUR)) = DATE(DATE_SUB(NOW(), INTERVAL 5 HOUR))
+    WHERE ue.role IN ('AgenteCallCenter', 'Supervisor')
+    GROUP BY ue.username, ue.extension
+    ORDER BY total_calls DESC
+    LIMIT ?
+  `, [limit]);
+  return rows;
+}
+
+async function getAvailabilityCount() {
+  const [rows] = await pool.execute(
+    `SELECT username, extension FROM user_extensions WHERE extension IS NOT NULL`
+  );
+  return rows;
+}
+
+module.exports.getDirectionBreakdown = getDirectionBreakdown;
+module.exports.getAgentRanking = getAgentRanking;
+module.exports.getAvailabilityCount = getAvailabilityCount;

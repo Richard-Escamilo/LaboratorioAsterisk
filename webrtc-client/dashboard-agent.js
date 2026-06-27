@@ -1,6 +1,7 @@
 let hourlyChart = null;
 let dailyCountChart = null;
 let dailyDurationChart = null;
+let directionChart = null;
 
 function renderHourlyChart(hourly) {
   const ctx = document.getElementById("hourlyChart");
@@ -49,6 +50,29 @@ function renderDailyCharts(dailyTrend) {
   });
 }
 
+function calcRate(total, answered) {
+  if (!total) return "0%";
+  return Math.round((answered / total) * 100) + "%";
+}
+
+function renderDirectionChart(breakdown) {
+  const entrante = Number(breakdown.entrante) || 0;
+  const saliente = Number(breakdown.saliente) || 0;
+  if (entrante + saliente === 0) return;
+
+  document.getElementById("directionChartBox").classList.remove("hidden");
+  const ctx = document.getElementById("directionChart");
+  if (directionChart) directionChart.destroy();
+  directionChart = new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: ["Entrante", "Saliente"],
+      datasets: [{ data: [entrante, saliente], backgroundColor: ["#E8910C", "#1C7293"] }],
+    },
+    options: { plugins: { legend: { position: "bottom", labels: { font: { size: 11 } } } } },
+  });
+}
+
 async function loadMyCalls(token) {
   try {
     const res = await fetch(`${BACKEND_URL}/api/me/calls`, {
@@ -58,14 +82,17 @@ async function loadMyCalls(token) {
 
     document.getElementById("statTotal").textContent = data.stats.total_calls || 0;
     document.getElementById("statAnswered").textContent = data.stats.answered_calls || 0;
+    document.getElementById("statRateToday").textContent = calcRate(data.stats.total_calls, data.stats.answered_calls);
     document.getElementById("statTmo").textContent = formatDuration(Math.round(data.stats.avg_duration_seconds) || 0);
 
     document.getElementById("statTotalAll").textContent = data.totalStats.total_calls || 0;
     document.getElementById("statAnsweredAll").textContent = data.totalStats.answered_calls || 0;
+    document.getElementById("statRateAll").textContent = calcRate(data.totalStats.total_calls, data.totalStats.answered_calls);
     document.getElementById("statTmoAll").textContent = formatDuration(Math.round(data.totalStats.avg_duration_seconds) || 0);
 
     renderHourlyChart(data.hourly || Array(24).fill(0));
     renderDailyCharts(data.dailyTrend || []);
+    if (data.directionBreakdown) renderDirectionChart(data.directionBreakdown);
 
     fillCallsTable("callsTodayTableBody", data.callsToday || [], "noCallsTodayMsg", "todayPagination");
     fillCallsTable("callsTableBody", data.calls || [], "noCallsMsg", "historyPagination");

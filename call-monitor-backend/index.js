@@ -10,6 +10,8 @@ const { appendExtension } = require("./provisionPjsip");
 const onlineStatus = require("./onlineStatus");
 const { createUserInMidpoint, updateUserInMidpoint } = require("./midpointAdmin");
 const { updateExtensionPassword } = require("./provisionPjsip");
+const path = require("path");
+const RECORDINGS_DIR = process.env.RECORDINGS_DIR || "/recordings";
 const { provisionUserWithKnownPassword } = require("./provisioning");
 
 const ALLOWED_ROLES = ["AgenteCallCenter"];
@@ -136,7 +138,8 @@ app.get("/api/me/calls", authMiddleware, async (req, res) => {
   const hourly = await db.getHourlyStats(req.user.extension);
   const totalStats = await db.getTotalStats(req.user.extension);
   const dailyTrend = await db.getDailyTrend(req.user.extension);
-  res.json({ calls, callsToday, stats, hourly, totalStats, dailyTrend });
+  const directionBreakdown = await db.getDirectionBreakdown(req.user.extension);
+  res.json({ calls, callsToday, stats, hourly, totalStats, dailyTrend, directionBreakdown });
 });
 
 app.get("/api/supervisor/team", authMiddleware, async (req, res) => {
@@ -304,6 +307,42 @@ app.put("/api/admin/users/:username", authMiddleware, async (req, res) => {
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
+});
+
+app.get("/api/admin/recordings-summary", authMiddleware, async (req, res) => {
+  if (req.user.role !== "Admin") return res.status(403).json({ error: "No autorizado" });
+  const summary = await db.getRecordingsSummaryByUser();
+  res.json({ summary });
+});
+
+app.get("/api/admin/recordings/:username", authMiddleware, async (req, res) => {
+  if (req.user.role !== "Admin") return res.status(403).json({ error: "No autorizado" });
+  const user = await db.getUserByUsername(req.params.username);
+  if (!user || !user.extension) return res.status(404).json({ error: "Usuario sin extension" });
+  const calls = await db.getRecordedCallsByExtension(user.extension);
+  res.json({ username: req.params.username, extension: user.extension, calls });
+});
+
+app.get("/api/admin/recordings/file/:channelId", authMiddleware, (req, res) => {
+  if (req.user.role !== "Admin") return res.status(403).json({ error: "No autorizado" });
+  const { channelId } = req.params;
+  if (!/^[\w.\-]+$/.test(channelId)) return res.status(400).json({ error: "ID invalido" });
+  const filePath = path.join(RECORDINGS_DIR, `${channelId}.wav`);
+  if (!fs.existsSync(filePath)) return res.status(404).json({ error: "Grabacion no encontrada" });
+  res.setHeader("Content-Type", "audio/wav");
+  fs.createReadStream(filePath).pipe(res);
+});
+
+app.get("/api/admin/global-stats", authMiddleware, async (req, res) => {
+  if (req.user.role !== "Admin") return res.status(403).json({ error: "No autorizado" });
+  const stats = await db.getGlobalDailyStats();
+  const totalStats = await db.getGlobalTotalStats();
+  const hourly = await db.getGlobalHourlyStats();
+  const dailyTrend = await db.getGlobalDailyTrend();
+  const ranking = await db.getAgentRanking(10);
+  const allUsersWithExt = await db.getAvailabilityCount();
+  const onlineCount = allUsersWithExt.filter((u) => onlineStatus.isOnline(u.extension)).length;
+  res.json({ stats, totalStats, hourly, dailyTrend, ranking, availability: { online: onlineCount, total: allUsersWithExt.length } });
 });
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));

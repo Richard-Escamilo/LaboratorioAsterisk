@@ -33,21 +33,30 @@ document.getElementById("btnLogin").onclick = async () => {
     badge.className = "badge role-" + data.role;
 
     if (data.extension) {
+      // Tiene telefono: Agente o Supervisor
+      document.getElementById("phoneTabBtn").classList.remove("hidden");
       document.getElementById("softphoneBox").classList.remove("hidden");
       document.getElementById("noPhoneBox").classList.add("hidden");
       registerSip(data.extension, password);
       loadMyCalls(data.token);
     } else {
-      document.getElementById("softphoneBox").classList.add("hidden");
-      document.getElementById("noPhoneBox").classList.remove("hidden");
+      // No tiene telefono (Admin): ocultamos la pestaña por completo
+      document.getElementById("phoneTabBtn").classList.add("hidden");
     }
 
-    if (data.role === "Supervisor" || data.role === "Admin") {
+    if (data.role === "Supervisor") {
       document.getElementById("teamTabBtn").classList.remove("hidden");
     }
+
     if (data.role === "Admin") {
       document.getElementById("adminTabBtn").classList.remove("hidden");
+      document.getElementById("usersTabBtn").classList.remove("hidden");
       loadSupervisorsDropdown();
+      loadAllUsers(data.token);
+      loadAdminHistory(data.token);
+      document.getElementById("recordingsTabBtn").classList.remove("hidden");
+      loadRecordingsSummary(data.token);
+      loadAdminDashboard(data.token);
     }
   } catch (err) {
     setLoginStatus("No se pudo conectar al backend: " + err.message, "err");

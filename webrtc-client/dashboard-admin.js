@@ -16,13 +16,16 @@ async function loadSupervisorsDropdown() {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await res.json();
-    const select = document.getElementById("adminSupervisor");
-    select.innerHTML = "";
-    (data.supervisors || []).forEach((s) => {
-      const opt = document.createElement("option");
-      opt.value = s;
-      opt.textContent = s;
-      select.appendChild(opt);
+    ["adminSupervisor", "editSupervisor"].forEach((selectId) => {
+      const select = document.getElementById(selectId);
+      if (!select) return;
+      select.innerHTML = '<option value="">— Ninguno —</option>';
+      (data.supervisors || []).forEach((s) => {
+        const opt = document.createElement("option");
+        opt.value = s;
+        opt.textContent = s;
+        select.appendChild(opt);
+      });
     });
   } catch (err) {
     console.error("Error cargando supervisores:", err);

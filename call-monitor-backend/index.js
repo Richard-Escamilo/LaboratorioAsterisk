@@ -127,10 +127,13 @@ app.get("/api/me/calls", authMiddleware, async (req, res) => {
   if (!req.user.extension) {
     return res.json({ calls: [], stats: { total_calls: 0, answered_calls: 0, avg_duration_seconds: 0 } });
   }
-  const calls = await db.getCallsByExtension(req.user.extension, 10);
+  const calls = await db.getCallsByExtension(req.user.extension, 50);
+  const callsToday = await db.getCallsByExtensionToday(req.user.extension, 30);
   const stats = await db.getDailyStats(req.user.extension);
   const hourly = await db.getHourlyStats(req.user.extension);
-  res.json({ calls, stats, hourly });
+  const totalStats = await db.getTotalStats(req.user.extension);
+  const dailyTrend = await db.getDailyTrend(req.user.extension);
+  res.json({ calls, callsToday, stats, hourly, totalStats, dailyTrend });
 });
 
 app.get("/api/supervisor/team", authMiddleware, async (req, res) => {

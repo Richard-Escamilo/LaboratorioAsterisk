@@ -116,7 +116,7 @@ async function getDailyStats(extension) {
        SUM(CASE WHEN bridged_at IS NOT NULL THEN 1 ELSE 0 END) AS answered_calls,
        AVG(CASE WHEN bridged_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, bridged_at, ended_at) END) AS avg_duration_seconds
      FROM call_history
-     WHERE (caller_ext = ? OR callee_ext = ?) AND DATE(started_at) = CURDATE()`,
+     WHERE (caller_ext = ? OR callee_ext = ?) AND DATE(DATE_SUB(started_at, INTERVAL 5 HOUR)) = DATE(DATE_SUB(NOW(), INTERVAL 5 HOUR))`,
     [extension, extension]
   );
   return rows[0];
@@ -127,10 +127,10 @@ module.exports.getDailyStats = getDailyStats;
 
 async function getHourlyStats(extension) {
   const [rows] = await pool.execute(
-    `SELECT HOUR(started_at) AS hour, COUNT(*) AS count
+    `SELECT HOUR(DATE_SUB(started_at, INTERVAL 5 HOUR)) AS hour, COUNT(*) AS count
      FROM call_history
-     WHERE (caller_ext = ? OR callee_ext = ?) AND DATE(started_at) = CURDATE()
-     GROUP BY HOUR(started_at)`,
+     WHERE (caller_ext = ? OR callee_ext = ?) AND DATE(DATE_SUB(started_at, INTERVAL 5 HOUR)) = DATE(DATE_SUB(NOW(), INTERVAL 5 HOUR))
+     GROUP BY HOUR(DATE_SUB(started_at, INTERVAL 5 HOUR))`,
     [extension, extension]
   );
   const hourly = Array(24).fill(0);
@@ -162,3 +162,54 @@ async function isAgentOfSupervisor(supervisorUsername, agentUsername) {
 }
 
 module.exports.isAgentOfSupervisor = isAgentOfSupervisor;
+
+async function getTotalStats(extension) {
+  const [rows] = await pool.execute(
+    `SELECT
+       COUNT(*) AS total_calls,
+       SUM(CASE WHEN bridged_at IS NOT NULL THEN 1 ELSE 0 END) AS answered_calls,
+       AVG(CASE WHEN bridged_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, bridged_at, ended_at) END) AS avg_duration_seconds
+     FROM call_history
+     WHERE caller_ext = ? OR callee_ext = ?`,
+    [extension, extension]
+  );
+  return rows[0];
+}
+
+module.exports.getTotalStats = getTotalStats;
+
+async function getDailyTrend(extension, days = 14) {
+  const [rows] = await pool.execute(
+    `SELECT
+       DATE(DATE_SUB(started_at, INTERVAL 5 HOUR)) AS day,
+       COUNT(*) AS count,
+       SUM(CASE WHEN bridged_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, bridged_at, ended_at) ELSE 0 END) AS total_duration
+     FROM call_history
+     WHERE (caller_ext = ? OR callee_ext = ?)
+       AND started_at >= DATE_SUB(NOW(), INTERVAL ? DAY)
+     GROUP BY day
+     ORDER BY day ASC`,
+    [extension, extension, days]
+  );
+  return rows;
+}
+
+module.exports.getDailyTrend = getDailyTrend;
+
+async function getCallsByExtensionToday(extension, limit = 20) {
+  const [rows] = await pool.execute(
+    `SELECT *,
+       CASE WHEN bridged_at IS NOT NULL THEN TIMESTAMPDIFF(SECOND, bridged_at, ended_at) ELSE 0 END AS duration_seconds,
+       CASE WHEN caller_ext = ? THEN callee_ext ELSE caller_ext END AS other_party,
+       CASE WHEN caller_ext = ? THEN 'saliente' ELSE 'entrante' END AS direction
+     FROM call_history
+     WHERE (caller_ext = ? OR callee_ext = ?)
+       AND DATE(DATE_SUB(started_at, INTERVAL 5 HOUR)) = DATE(DATE_SUB(NOW(), INTERVAL 5 HOUR))
+     ORDER BY ended_at DESC
+     LIMIT ?`,
+    [extension, extension, extension, extension, limit]
+  );
+  return rows;
+}
+
+module.exports.getCallsByExtensionToday = getCallsByExtensionToday;

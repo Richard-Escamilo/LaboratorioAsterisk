@@ -1,0 +1,7 @@
+apiVersion: 1
+providers:
+  - name: 'Call Center Dashboards'
+    folder: ''
+    type: file
+    options:
+      path: /etc/grafana/provisioning/dashboards

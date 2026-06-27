@@ -12,6 +12,7 @@ const { createUserInMidpoint, updateUserInMidpoint } = require("./midpointAdmin"
 const { updateExtensionPassword } = require("./provisionPjsip");
 const path = require("path");
 const RECORDINGS_DIR = process.env.RECORDINGS_DIR || "/recordings";
+const metrics = require("./metrics");
 const { provisionUserWithKnownPassword } = require("./provisioning");
 
 const ALLOWED_ROLES = ["AgenteCallCenter"];
@@ -347,6 +348,16 @@ app.get("/api/admin/global-stats", authMiddleware, async (req, res) => {
   const allUsersWithExt = await db.getAvailabilityCount();
   const onlineCount = allUsersWithExt.filter((u) => onlineStatus.isOnline(u.extension)).length;
   res.json({ stats, totalStats, hourly, dailyTrend, ranking, availability: { online: onlineCount, total: allUsersWithExt.length } });
+});
+
+app.get("/metrics", async (req, res) => {
+  try {
+    await metrics.refreshMetrics();
+    res.set("Content-Type", metrics.register.contentType);
+    res.end(await metrics.register.metrics());
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
 });
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));

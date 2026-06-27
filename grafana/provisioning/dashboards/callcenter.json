@@ -1,0 +1,51 @@
+{
+  "title": "Call Center - Metricas en vivo",
+  "timezone": "browser",
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "panels": [
+    {
+      "title": "Llamadas activas",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 0 },
+      "targets": [{ "expr": "callcenter_active_calls", "datasource": { "type": "prometheus", "uid": "Prometheus" } }],
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" } } }
+    },
+    {
+      "title": "Llamadas hoy",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 0 },
+      "targets": [{ "expr": "callcenter_calls_today_total", "datasource": { "type": "prometheus", "uid": "Prometheus" } }]
+    },
+    {
+      "title": "Contestadas hoy",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 0 },
+      "targets": [{ "expr": "callcenter_calls_today_answered", "datasource": { "type": "prometheus", "uid": "Prometheus" } }]
+    },
+    {
+      "title": "TMO hoy (segundos)",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 0 },
+      "targets": [{ "expr": "callcenter_avg_duration_seconds_today", "datasource": { "type": "prometheus", "uid": "Prometheus" } }]
+    },
+    {
+      "title": "Agentes en linea",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 6 },
+      "targets": [{ "expr": "callcenter_agents_online", "datasource": { "type": "prometheus", "uid": "Prometheus" } }]
+    },
+    {
+      "title": "Agentes totales",
+      "type": "stat",
+      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 6 },
+      "targets": [{ "expr": "callcenter_agents_total", "datasource": { "type": "prometheus", "uid": "Prometheus" } }]
+    },
+    {
+      "title": "Llamadas activas en el tiempo",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "targets": [{ "expr": "callcenter_active_calls", "datasource": { "type": "prometheus", "uid": "Prometheus" } }]
+    }
+  ]
+}

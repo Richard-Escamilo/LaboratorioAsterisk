@@ -107,6 +107,34 @@ services:
       - recordings_data:/recordings:ro
     networks:
       - lab-net
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: lab-prometheus
+    restart: unless-stopped
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - lab-net
+  grafana:
+    image: grafana/grafana:latest
+    container_name: lab-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - lab-net
 networks:
   lab-net:
     driver: bridge
@@ -116,3 +144,5 @@ volumes:
   midpoint_home:
   asterisk_data:
   recordings_data:
+  prometheus_data:
+  grafana_data:

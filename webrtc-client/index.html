@@ -62,6 +62,7 @@
       <button id="btnRejectFloat" class="fc-btn-reject">Rechazar</button>
     </div>
     <div id="fcInCallActions" class="fc-actions hidden">
+      <button id="btnParkFloat" class="fc-btn-park">Aparcar</button>
       <button id="btnHangupFloat" class="fc-btn-hangup">Colgar</button>
     </div>
   </div>
@@ -86,6 +87,7 @@
         <button class="tab-btn hidden" id="adminTabBtn" data-tab="admin">Crear usuario</button>
         <button class="tab-btn hidden" id="usersTabBtn" data-tab="users">Usuarios</button>
         <button class="tab-btn hidden" id="recordingsTabBtn" data-tab="recordings">Grabaciones</button>
+        <button class="tab-btn hidden" id="parkingTabBtn" data-tab="parking">Parqueo</button>
       </div>
 
       <!-- ============ DASHBOARD ============ -->
@@ -159,6 +161,10 @@
           Tu rol no tiene una extensión de teléfono asignada — solo acceso a la consola.
         </div>
 
+        <p class="section-title">Llamadas aparcadas</p>
+        <div id="parkedCallsList"></div>
+        <div id="noParkedMsg" class="no-calls">No hay llamadas aparcadas en este momento.</div>
+
         <p class="section-title">Llamadas de hoy</p>
         <table class="calls-table">
           <thead><tr><th>Hora</th><th>Con</th><th>Dirección</th><th>Duración</th></tr></thead>
@@ -207,6 +213,16 @@
 
         <button id="btnCreateUser" class="btn-primary" style="margin-top:18px">Crear usuario</button>
         <p class="hint">La extensión SIP (si aplica) se crea automáticamente en hasta 20 segundos.</p>
+      </div>
+
+      <!-- ============ PARQUEO (admin) ============ -->
+      <div id="tabParking" class="tab-panel hidden">
+        <p class="section-title" style="margin-top:0">Mensaje de llamada aparcada</p>
+        <div id="parkingMsgStatus" class="hidden"></div>
+        <label for="parkingMessageText">Texto a reproducir (se convierte a voz automáticamente)</label>
+        <textarea id="parkingMessageText" rows="2" placeholder="Su llamada ha sido puesta en espera..."></textarea>
+        <button id="btnSaveParkingMessage" class="btn-primary" style="margin-top:10px">Guardar mensaje</button>
+        <p class="hint">Este mensaje se reproduce automáticamente cuando un agente aparca una llamada.</p>
       </div>
 
       <!-- ============ USUARIOS (admin) ============ -->
@@ -323,5 +339,6 @@
 <script src="dashboard-admin.js"></script>
 <script src="admin-users.js"></script>
 <script src="recordings.js"></script>
+<script src="parking.js"></script>
 </body>
 </html>

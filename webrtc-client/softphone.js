@@ -82,3 +82,25 @@ document.getElementById("btnHangupFloat").onclick = () => {
   if (session) session.terminate();
   hideFloatingWidget();
 };
+
+document.getElementById("btnParkFloat").onclick = async () => {
+  if (!session) return;
+  const token = localStorage.getItem("cc_token");
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/park-call`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || "No se pudo aparcar la llamada");
+      return;
+    }
+    try { session.terminate(); } catch (e) { /* la sesion ya pudo haberse cerrado sola */ }
+    hideFloatingWidget();
+    setStatus("Llamada aparcada", "ok");
+    setTimeout(() => loadParkedCalls(), 1500);
+  } catch (err) {
+    alert("Error de conexion: " + err.message);
+  }
+};

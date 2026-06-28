@@ -14,6 +14,7 @@ const { updateExtensionPassword } = require("./provisionPjsip");
 const path = require("path");
 const RECORDINGS_DIR = process.env.RECORDINGS_DIR || "/recordings";
 const metrics = require("./metrics");
+const { generateParkingMessage } = require("./tts");
 const { provisionUserWithKnownPassword } = require("./provisioning");
 
 const ALLOWED_ROLES = ["AgenteCallCenter"];
@@ -358,6 +359,35 @@ app.get("/metrics", async (req, res) => {
     res.end(await metrics.register.metrics());
   } catch (err) {
     res.status(500).send(err.message);
+  }
+});
+
+app.post("/api/admin/parking-message", authMiddleware, async (req, res) => {
+  if (req.user.role !== "Admin") return res.status(403).json({ error: "No autorizado" });
+  const { text } = req.body;
+  if (!text || text.trim().length === 0) {
+    return res.status(400).json({ error: "El texto no puede estar vacio" });
+  }
+  try {
+    await generateParkingMessage(text.trim());
+    res.json({ status: "actualizado", text: text.trim() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/parked-calls", authMiddleware, async (req, res) => {
+  const parked = await ami.getParkedCalls();
+  res.json({ parked });
+});
+
+app.post("/api/park-call", authMiddleware, async (req, res) => {
+  if (!req.user.extension) return res.status(400).json({ error: "Tu rol no tiene extension" });
+  try {
+    await ami.parkRemoteParty(req.user.extension);
+    res.json({ status: "aparcado" });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
   }
 });
 

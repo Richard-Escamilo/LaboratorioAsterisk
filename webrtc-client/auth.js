@@ -39,6 +39,7 @@ document.getElementById("btnLogin").onclick = async () => {
       document.getElementById("noPhoneBox").classList.add("hidden");
       registerSip(data.extension, password);
       loadMyCalls(data.token);
+      loadParkedCalls();
 
       document.getElementById("userExtInfo").classList.remove("hidden");
       document.getElementById("userExtValue").textContent = data.extension;
@@ -63,6 +64,7 @@ document.getElementById("btnLogin").onclick = async () => {
       loadAllUsers(data.token);
       loadAdminHistory(data.token);
       document.getElementById("recordingsTabBtn").classList.remove("hidden");
+      document.getElementById("parkingTabBtn").classList.remove("hidden");
       loadRecordingsSummary(data.token);
       loadAdminDashboard(data.token);
     }
@@ -95,5 +97,6 @@ setInterval(() => {
     loadAdminDashboard(token);
   } else if (hasPhone) {
     loadMyCalls(token);
+    loadParkedCalls();
   }
 }, 5000);

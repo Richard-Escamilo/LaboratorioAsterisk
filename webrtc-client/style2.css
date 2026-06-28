@@ -104,3 +104,17 @@ select:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px r
 @media (max-width: 700px) {
   .floating-call-widget { top: auto; bottom: 16px; right: 16px; left: 16px; width: auto; }
 }
+
+.fc-btn-park { background: #E8910C; color: #fff; }
+.parked-call-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 5px; margin-bottom: 8px;
+}
+.parked-call-item .pc-info { font-size: 13px; }
+.parked-call-item .pc-space { font-weight: 700; font-family: 'JetBrains Mono', monospace; color: var(--navy); }
+
+textarea {
+  width: 100%; padding: 10px 12px; font-size: 14.5px; font-family: 'Inter', sans-serif;
+  border: 1px solid var(--line); border-radius: 5px; background: #FBFBFC; color: var(--ink); resize: vertical;
+}
+textarea:focus { outline: none; border-color: var(--navy); box-shadow: 0 0 0 3px rgba(28,35,51,.09); }

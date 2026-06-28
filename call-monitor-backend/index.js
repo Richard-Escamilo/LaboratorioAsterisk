@@ -83,6 +83,14 @@ ami.on("managerevent", async (evt) => {
         break;
       }
 
+      case "UnParkedCall": {
+        const callerExt = evt.retrievercalleridnum;
+        const calleeExt = evt.parkeecalleridnum;
+        await db.startCallSession({ channelId: evt.retrieveruniqueid, callerExt, calleeExt });
+        await db.markBridged(evt.retrieveruniqueid);
+        io.emit("call:bridged", { callId: evt.retrieveruniqueid });
+        break;
+      }
       default: break;
     }
   } catch (err) {

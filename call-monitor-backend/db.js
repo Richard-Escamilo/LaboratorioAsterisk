@@ -414,3 +414,12 @@ async function getSupervisorOfAgent(agentUsername) {
 }
 
 module.exports.getSupervisorOfAgent = getSupervisorOfAgent;
+
+async function updateSessionParticipants(channelId, callerExt, calleeExt) {
+  await pool.execute(
+    `UPDATE call_sessions SET caller_ext=?, callee_ext=? WHERE channel_id=?`,
+    [callerExt, calleeExt, channelId]
+  );
+}
+
+module.exports.updateSessionParticipants = updateSessionParticipants;

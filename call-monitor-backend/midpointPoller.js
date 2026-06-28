@@ -107,4 +107,4 @@ function startMidpointPoller() {
   setInterval(pollOnce, POLL_INTERVAL_MS);
 }
 
-module.exports = { startMidpointPoller };
+module.exports = { startMidpointPoller, generatePassword, userHasRole, extractUsername };

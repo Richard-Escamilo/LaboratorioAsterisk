@@ -57,4 +57,4 @@ function startShaper() {
   setInterval(evaluateAndApply, 15000);
 }
 
-module.exports = { startShaper, getCurrentTierInfo };
+module.exports = { startShaper, getCurrentTierInfo, decideTier, TIERS };

@@ -56,10 +56,10 @@ async function provisionUser(username, roleConfig) {
     await db.addUserExtensionWithPassword(username, String(extension), roleConfig.role, password);
     await ami.reloadPjsip();
     await new Promise((r) => setTimeout(r, 1500));
-    console.log(`[midpoint-poller] APROVISIONADO (SIP) usuario=${username} rol=${roleConfig.role} extension=${extension} password=${password}`);
+    console.log(`[midpoint-poller] APROVISIONADO (SIP) usuario=${username} rol=${roleConfig.role} extension=${extension} `);
   } else {
     await db.addUserExtensionWithPassword(username, null, roleConfig.role, password);
-    console.log(`[midpoint-poller] APROVISIONADO (login) usuario=${username} rol=${roleConfig.role} password=${password}`);
+    console.log(`[midpoint-poller] APROVISIONADO (login) usuario=${username} rol=${roleConfig.role} `);
   }
 }
 

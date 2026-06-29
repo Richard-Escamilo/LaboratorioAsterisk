@@ -120,17 +120,22 @@ app.post("/api/provision", async (req, res) => {
 
 app.post("/api/login", async (req, res) => {
   const { username, password } = req.body;
+  const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+
   if (!username || !password) {
     return res.status(400).json({ error: "username y password son requeridos" });
   }
   const user = await db.getUserByUsername(username);
   if (!user || !user.password_hash) {
+    await db.logLoginAttempt(username, null, ip, false);
     return res.status(401).json({ error: "Credenciales invalidas" });
   }
   const valid = await bcrypt.compare(password, user.password_hash);
   if (!valid) {
+    await db.logLoginAttempt(username, user.role, ip, false);
     return res.status(401).json({ error: "Credenciales invalidas" });
   }
+  await db.logLoginAttempt(username, user.role, ip, true);
   const token = jwt.sign(
     { username: user.username, extension: user.extension, role: user.role },
     JWT_SECRET,
@@ -397,6 +402,12 @@ app.post("/api/park-call", authMiddleware, async (req, res) => {
   } catch (err) {
     res.status(400).json({ error: err.message });
   }
+});
+
+app.get("/api/admin/login-audit", authMiddleware, async (req, res) => {
+  if (req.user.role !== "Admin") return res.status(403).json({ error: "No autorizado" });
+  const audit = await db.getLoginAudit(100);
+  res.json({ audit });
 });
 
 app.get("/health", (req, res) => res.json({ status: "ok" }));

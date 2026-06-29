@@ -423,3 +423,21 @@ async function updateSessionParticipants(channelId, callerExt, calleeExt) {
 }
 
 module.exports.updateSessionParticipants = updateSessionParticipants;
+
+async function logLoginAttempt(username, role, ipAddress, success) {
+  await pool.execute(
+    `INSERT INTO login_audit (username, role, ip_address, success) VALUES (?, ?, ?, ?)`,
+    [username, role || null, ipAddress, success]
+  );
+}
+
+async function getLoginAudit(limit = 100) {
+  const [rows] = await pool.execute(
+    `SELECT * FROM login_audit ORDER BY occurred_at DESC LIMIT ?`,
+    [limit]
+  );
+  return rows;
+}
+
+module.exports.logLoginAttempt = logLoginAttempt;
+module.exports.getLoginAudit = getLoginAudit;

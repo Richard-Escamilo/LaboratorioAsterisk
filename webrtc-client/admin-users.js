@@ -104,3 +104,31 @@ document.getElementById("btnSaveEditUser").onclick = async () => {
     msgEl.className = "err";
   }
 };
+
+async function loadLoginAudit(token) {
+  try {
+    const res = await fetch(`${BACKEND_URL}/api/admin/login-audit`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await res.json();
+    const tbody = document.getElementById("loginAuditTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    (data.audit || []).forEach((row) => {
+      const tr = document.createElement("tr");
+      const resultBadge = row.success
+        ? `<span class="dir-badge dir-entrante">Exitoso</span>`
+        : `<span class="dir-badge dir-saliente">Fallido</span>`;
+      tr.innerHTML = `
+        <td class="mono">${formatTime(row.occurred_at)}</td>
+        <td class="mono">${row.username}</td>
+        <td class="mono">${row.role || "-"}</td>
+        <td class="mono">${row.ip_address || "-"}</td>
+        <td>${resultBadge}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  } catch (err) {
+    console.error("Error cargando auditoria de login:", err);
+  }
+}

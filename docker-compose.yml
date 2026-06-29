@@ -169,6 +169,29 @@ services:
     networks:
       - lab-net
 
+  sonarqube:
+    image: sonarqube:community
+    container_name: lab-sonarqube
+    restart: "no"
+    environment:
+      SONAR_SEARCH_JAVAOPTS: "-Xms512m -Xmx512m"
+      SONAR_WEB_JAVAOPTS: "-Xmx256m -Xms128m"
+      SONAR_CE_JAVAOPTS: "-Xmx256m -Xms128m"
+    ulimits:
+      nofile:
+        soft: 131072
+        hard: 131072
+      nproc: 8192
+    mem_limit: 1500m
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
+    ports:
+      - "9000:9000"
+    networks:
+      - lab-net
+
 networks:
   lab-net:
     driver: bridge
@@ -180,3 +203,6 @@ volumes:
   recordings_data:
   prometheus_data:
   grafana_data:
+  sonarqube_data:
+  sonarqube_extensions:
+  sonarqube_logs:

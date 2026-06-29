@@ -30,3 +30,12 @@ CREATE TABLE IF NOT EXISTS call_history (
 INSERT INTO user_extensions (username, extension, role) VALUES
   ('richard', '1001', 'agente'),
   ('companero2', '1002', 'agente');
+
+CREATE TABLE IF NOT EXISTS login_audit (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(100) NOT NULL,
+  role VARCHAR(50),
+  ip_address VARCHAR(45),
+  success BOOLEAN NOT NULL,
+  occurred_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

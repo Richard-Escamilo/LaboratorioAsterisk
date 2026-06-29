@@ -62,9 +62,11 @@ document.getElementById("btnLogin").onclick = async () => {
       document.getElementById("usersTabBtn").classList.remove("hidden");
       loadSupervisorsDropdown();
       loadAllUsers(data.token);
+      loadLoginAudit(data.token);
       loadAdminHistory(data.token);
       document.getElementById("recordingsTabBtn").classList.remove("hidden");
       document.getElementById("parkingTabBtn").classList.remove("hidden");
+      document.getElementById("auditTabBtn").classList.remove("hidden");
       loadRecordingsSummary(data.token);
       loadAdminDashboard(data.token);
     }
@@ -94,6 +96,7 @@ setInterval(() => {
   if (role === "Admin") {
     loadAdminHistory(token);
     loadAllUsers(token);
+    loadLoginAudit(token);
     loadAdminDashboard(token);
   } else if (hasPhone) {
     loadMyCalls(token);

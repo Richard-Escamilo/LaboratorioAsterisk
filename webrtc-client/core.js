@@ -15,7 +15,7 @@ function formatTime(isoString) {
 }
 
 // ---------------- Pestañas ----------------
-const TAB_IDS = { dashboard: "tabDashboard", phone: "tabPhone", history: "tabHistory", team: "tabTeam", admin: "tabAdmin", users: "tabUsers", recordings: "tabRecordings", parking: "tabParking" };
+const TAB_IDS = { dashboard: "tabDashboard", phone: "tabPhone", history: "tabHistory", team: "tabTeam", admin: "tabAdmin", users: "tabUsers", recordings: "tabRecordings", parking: "tabParking", audit: "tabAudit" };
 document.querySelectorAll(".tab-btn").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".tab-btn").forEach((b) => b.classList.remove("active"));

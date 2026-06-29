@@ -36,7 +36,11 @@ function authMiddleware(req, res, next) {
 }
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_ORIGIN || "https://98.95.202.225:8443",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 app.use(express.json());
 
 const httpsOptions = {

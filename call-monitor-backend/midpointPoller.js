@@ -1,3 +1,4 @@
+const crypto = require("crypto");
 const { appendExtension, extensionExists } = require("./provisionPjsip");
 const db = require("./db");
 const ami = require("./amiClient");
@@ -20,7 +21,8 @@ function basicAuthHeader() {
 }
 
 function generatePassword() {
-  return Math.random().toString(36).slice(-10) + "Aa1!";
+  const randomPart = crypto.randomBytes(8).toString("base64").replace(/[+/=]/g, "").slice(0, 10);
+  return randomPart + "Aa1!";
 }
 
 async function fetchUsersFromMidpoint() {

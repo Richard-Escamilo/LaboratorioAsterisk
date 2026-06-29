@@ -13,6 +13,14 @@ function basicAuthHeader() {
   return `Basic ${token}`;
 }
 
+function isValidUsername(username) {
+  return /^[a-zA-Z0-9._-]{1,64}$/.test(username);
+}
+
+function isValidOid(oid) {
+  return /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(oid);
+}
+
 function escapeXml(str) {
   return String(str).replace(/[<>&'"]/g, (c) => ({
     "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;",
@@ -76,6 +84,9 @@ async function createUserInMidpoint({ username, fullName, password, role }) {
 module.exports = { createUserInMidpoint };
 
 async function findUserOidByUsername(username) {
+  if (!isValidUsername(username)) {
+    throw new Error("Nombre de usuario invalido");
+  }
   const res = await fetch(`${MIDPOINT_BASE_URL}/ws/rest/users`, {
     headers: { Authorization: basicAuthHeader(), Accept: "application/json" },
   });
@@ -90,6 +101,9 @@ async function findUserOidByUsername(username) {
 
 async function updateUserInMidpoint({ username, oldRole, newRole, newPassword }) {
   const oid = await findUserOidByUsername(username);
+  if (!isValidOid(oid)) {
+    throw new Error("OID recuperado de midPoint tiene formato invalido");
+  }
   const deltas = [];
 
   if (newRole && newRole !== oldRole) {

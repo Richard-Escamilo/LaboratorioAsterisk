@@ -19,12 +19,12 @@ function generateParkingMessage(rawText) {
   const tempWav = path.join("/tmp", `parqueo_raw_${uniqueId}.wav`);
 
   return new Promise((resolve, reject) => {
-    execFile("espeak-ng", ["-v", "es", "-w", tempWav, text], (err) => {
+    execFile("/usr/bin/espeak-ng", ["-v", "es", "-w", tempWav, text], (err) => {
       if (err) {
         fs.unlink(tempWav, () => {});
         return reject(new Error("Error generando audio: " + err.message));
       }
-      execFile("sox", [tempWav, "-r", "8000", "-c", "1", "-b", "16", FINAL_WAV], (err2) => {
+      execFile("/usr/bin/sox", [tempWav, "-r", "8000", "-c", "1", "-b", "16", FINAL_WAV], (err2) => {
         fs.unlink(tempWav, () => {});
         if (err2) return reject(new Error("Error convirtiendo audio: " + err2.message));
         resolve({ path: FINAL_WAV });

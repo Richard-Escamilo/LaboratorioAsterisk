@@ -28,6 +28,7 @@ protocol=wss
 bind=0.0.0.0:8089
 
 [endpoint-base](!)
+transport=transport-tls
 type=endpoint
 context=internal
 disallow=ulaw,alaw

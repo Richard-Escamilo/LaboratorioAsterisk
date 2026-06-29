@@ -229,6 +229,7 @@ Análisis continuo con **SonarCloud**: [ver proyecto](https://sonarcloud.io/proj
 
 | Documento | Contenido |
 |---|---|
+| `docs/tabla_cumplimiento_27001_25010.md` | Tabla de relación componente ↔ cláusula ISO 27001 ↔ característica ISO 25010 |
 | `docs/cumplimiento_A.8.16_auditoria.md` | Justificación del cumplimiento del control de auditoría ISO 27001 |
 | `docs/analisis_vulnerabilidades_docker.md` | Resultados del escaneo Trivy en las 7 imágenes del proyecto |
 | `docs/pentesting_basico.md` | Pruebas de penetración realizadas y correcciones aplicadas |

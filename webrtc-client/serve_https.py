@@ -10,6 +10,7 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         super().end_headers()
 
 ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+ctx.minimum_version = ssl.TLSVersion.TLSv1_2
 ctx.load_cert_chain(
     certfile="../asterisk/config/keys/asterisk.pem",
     keyfile="../asterisk/config/keys/asterisk.key",

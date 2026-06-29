@@ -36,6 +36,7 @@ function authMiddleware(req, res, next) {
 }
 
 const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const app = express();
 app.disable("x-powered-by");
 app.use(helmet());
@@ -125,7 +126,15 @@ app.post("/api/provision", async (req, res) => {
   }
 });
 
-app.post("/api/login", async (req, res) => {
+const loginLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Demasiados intentos de inicio de sesion. Intenta de nuevo en unos minutos." },
+});
+
+app.post("/api/login", loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   const ip = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
 

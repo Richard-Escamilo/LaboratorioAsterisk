@@ -6,7 +6,14 @@ const SOUNDS_DIR = path.join(CONFIG_DIR, "sounds");
 const TEMP_WAV = "/tmp/parqueo_raw.wav";
 const FINAL_WAV = path.join(SOUNDS_DIR, "parqueo_mensaje.wav");
 
-function generateParkingMessage(text) {
+function sanitizeText(text) {
+  return text
+    .slice(0, 300)
+    .replace(/[^\p{L}\p{N}\s.,;:!?¡¿'-]/gu, "");
+}
+
+function generateParkingMessage(rawText) {
+  const text = sanitizeText(rawText);
   return new Promise((resolve, reject) => {
     execFile("espeak-ng", ["-v", "es", "-w", TEMP_WAV, text], (err) => {
       if (err) return reject(new Error("Error generando audio: " + err.message));

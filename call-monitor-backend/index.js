@@ -35,7 +35,10 @@ function authMiddleware(req, res, next) {
   }
 }
 
+const helmet = require("helmet");
 const app = express();
+app.disable("x-powered-by");
+app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_ORIGIN || "https://98.95.202.225:8443",
   methods: ["GET", "POST", "PUT", "DELETE"],

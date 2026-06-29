@@ -7,6 +7,11 @@ class NoCacheHandler(http.server.SimpleHTTPRequestHandler):
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
         self.send_header("Pragma", "no-cache")
         self.send_header("Expires", "0")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "SAMEORIGIN")
+        self.send_header("Strict-Transport-Security", "max-age=15552000; includeSubDomains")
+        self.send_header("Referrer-Policy", "no-referrer")
+        self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://98.95.202.225:4000 wss://98.95.202.225:8089; img-src 'self' data:; media-src 'self' https://98.95.202.225:4000 blob:")
         super().end_headers()
 
 ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)

@@ -20,7 +20,9 @@ ctx.load_cert_chain(
     certfile="../asterisk/config/keys/asterisk.pem",
     keyfile="../asterisk/config/keys/asterisk.key",
 )
-server = http.server.HTTPServer(("0.0.0.0", 8443), NoCacheHandler)
+import socketserver
+socketserver.ThreadingTCPServer.allow_reuse_address = True
+server = socketserver.ThreadingTCPServer(("0.0.0.0", 8443), NoCacheHandler)
 server.socket = ctx.wrap_socket(server.socket, server_side=True)
 print("Servidor HTTPS en :8443 (sin hilos, sin cache)")
 server.serve_forever()
